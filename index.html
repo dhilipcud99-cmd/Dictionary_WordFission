@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WordFission | Dictionary App</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="hero">
+      <div class="hero-icon">📖</div>
+      <div>
+        <h1><a href="index.html" class="brand-link">WordFission</a></h1>
+        <p>Discover meanings, pronunciation, etymology, and examples for any word</p>
+      </div>
+      <button id="theme-toggle" class="theme-toggle" aria-label="Toggle light dark mode">🌙 Dark</button>
+    </header>
+
+    <main class="content">
+      <section class="search-panel">
+        <label for="search-input" class="visually-hidden">Search for any word</label>
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input id="search-input" type="text" placeholder="Search for any word..." autocomplete="off" />
+          <button id="search-button">Search</button>
+        </div>
+        <div class="suggestions-panel" id="suggestions-panel" aria-live="polite"></div>
+      </section>
+
+      <section class="output-panel" id="output-panel">
+        <div class="output-empty">
+          <p>Search for a word to see definitions, pronunciation, and examples.</p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>© 2025 WordFission. Enhance your vocabulary every day.</p>
+    </footer>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
