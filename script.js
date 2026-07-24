@@ -392,22 +392,37 @@ function buildEtymologyCardHtml(word, etymologyText, entry, etymologyUrl) {
   `;
 }
 
+function isValidTranslation(result, source) {
+  if (!result || typeof result !== 'string') return false;
+  const t = result.trim();
+  if (!t) return false;
+  if (t.toLowerCase() === source.toLowerCase()) return false;
+  if (/QUERY LENGTH LIMIT|MYMEMORY WARNING|PLEASE SELECT|quota|exceeded|invalid/i.test(t)) return false;
+  if (/<[a-z][\s\S]*>/i.test(t)) return false;
+  if (/https?:\/\/|www\./i.test(t)) return false;
+  if (/^[{\["']/.test(t) && t.length > 20) return false;
+  if (t.length > source.length * 6 + 80) return false;
+  return true;
+}
+
 async function fetchTranslation(text, langCode) {
-  const key = text + '|' + langCode;
+  const sanitized = text.trim().replace(/\s+/g, ' ');
+  if (!sanitized) return null;
+  const key = sanitized + '|' + langCode;
   if (translationCache.has(key)) return translationCache.get(key);
   try {
-    const url = MYMEMORY_API + '?q=' + encodeURIComponent(text) + '&langpair=en|' + langCode;
+    const url = MYMEMORY_API + '?q=' + encodeURIComponent(sanitized) + '&langpair=en|' + langCode;
     const res = await fetch(url);
     if (!res.ok) throw new Error('Translation failed');
     const data = await res.json();
-    const result = data?.responseData?.translatedText || '';
-    if (result && result.toLowerCase() !== text.toLowerCase()) {
+    const result = (data?.responseData?.translatedText || '').trim();
+    if (isValidTranslation(result, sanitized)) {
       translationCache.set(key, result);
       return result;
     }
-    return '';
+    return null;
   } catch (e) {
-    return '';
+    return null;
   }
 }
 
@@ -679,18 +694,26 @@ outputPanel.addEventListener('change', async (event) => {
   if (!langCode || !resultEl) return;
 
   const langName = TRANSLATION_LANGS.find(l => l.code === langCode)?.name || langCode;
-  const definition = resultEl.closest('.definition-card')
-    ?.querySelector('.meaning-list li')?.textContent?.trim() || '';
+
+  // Extract plain definition text only — clone the first <li>, strip .example children
+  const defCard = resultEl.closest('.definition-card');
+  const firstLi = defCard?.querySelector('.meaning-list li');
+  let definitionInput = '';
+  if (firstLi) {
+    const clone = firstLi.cloneNode(true);
+    clone.querySelectorAll('.example').forEach(el => el.remove());
+    definitionInput = clone.textContent.trim().replace(/\s+/g, ' ').slice(0, 180);
+  }
 
   resultEl.innerHTML = '<span class="translation-loading">Translating...</span>';
 
   const [wordTranslation, defTranslation] = await Promise.all([
     fetchTranslation(word, langCode),
-    definition ? fetchTranslation(definition.slice(0, 200), langCode) : Promise.resolve('')
+    definitionInput ? fetchTranslation(definitionInput, langCode) : Promise.resolve(null)
   ]);
 
   if (!wordTranslation) {
-    resultEl.innerHTML = '<span class="translation-error">Translation not available for this language.</span>';
+    resultEl.innerHTML = '<span class="translation-error">Translation unavailable.</span>';
     return;
   }
 
