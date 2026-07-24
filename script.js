@@ -132,127 +132,15 @@ function renderBookmarks() {
     .join('');
 }
 
-const FALLBACK_WORDS = [
-  "ability", "beautiful", "creative", "dynamic", "eloquent", "frequency", "generous",
-  "harmony", "infinite", "journey", "knowledge", "luminous", "magnificent", "novel",
-  "optimistic", "passionate", "quantum", "resilient", "sincere", "thoughtful", "unique",
-  "vibrant", "wisdom", "xenon", "yesterday", "zenith", "adventure", "bravery", "clarity",
-  "dignity", "empathy", "flourish", "gratitude", "honesty", "insight", "jubilant",
-  "kindness", "loyalty", "modesty", "nurture", "originate", "patience", "respect",
-  "strength", "triumph", "understanding", "valiant", "wonder", "youthful", "zeal",
-  "ambition", "benevolent", "candid", "dauntless", "effervescent", "fidelity", "gallant",
-  "humility", "illustrious", "judicious", "keen", "loquacious", "meticulous", "nimble",
-  "opulent", "prudent", "quaint", "radiant", "sagacious", "tenacious", "unwavering",
-  "versatile", "whimsical", "exuberant", "yearning", "zealous", "astute", "bliss",
-  "candor", "dexterity", "enigma", "fervent", "grace", "haven", "integrity", "jovial",
-  "kinetic", "legacy", "mirth", "noble", "omen", "poise", "quest", "reverie", "serene",
-  "tranquil", "utopia", "valor", "whimsy", "xenial", "yearn", "zephyr", "acumen",
-  "beacon", "catalyst", "daring", "ethereal", "fortitude", "grit", "hallmark", "iconic",
-  "jubilee", "karma", "luster", "marvel", "nexus", "oracle", "pinnacle", "quintessence",
-  "renaissance", "solace", "tapestry", "umbra", "vivid", "wanderlust", "xenophile",
-  "yonder", "zeitgeist", "altruism", "brevity", "charisma", "diligence", "epiphany",
-  "finesse", "genesis", "heritage", "idealism", "justice", "kinship", "liberty",
-  "momentum", "nuance", "odyssey", "paradigm", "quorum", "resolve", "sanctuary",
-  "tenacity", "unity", "virtue", "warmth", "xenolith", "yield", "zeal",
-  "abound", "acclaim", "adept", "affinity", "agile", "allegiance", "allure", "altruistic",
-  "amicable", "aplomb", "ardent", "ardor", "articulate", "aspire", "assiduous", "aura",
-  "authentic", "awe", "axiom", "balance", "benign", "bold", "boundless", "buoyant",
-  "caliber", "calm", "capable", "captivate", "celebrate", "celerity", "cherish", "civil",
-  "cogent", "coherent", "compassion", "competent", "composed", "concise", "confident",
-  "congenial", "conscience", "conscious", "conviction", "cordial", "courage", "courteous",
-  "credible", "crisp", "cultivate", "curious", "decisive", "dedicated", "deliberate",
-  "devoted", "discern", "discipline", "discover", "distinct", "driven", "earnest",
-  "effective", "efficient", "elegant", "elevate", "endure", "energize", "engage",
-  "enlighten", "equanimity", "ethical", "evolve", "exact", "excel", "exemplary",
-  "expansive", "explicit", "expressive", "fair", "faithful", "fearless", "flexible",
-  "focused", "forthright", "frank", "free", "fresh", "fulfil", "genuine", "gifted",
-  "gleam", "global", "grounded", "grow", "guide", "hardy", "heartfelt", "heroic",
-  "hopeful", "illuminate", "imaginative", "immense", "impact", "improve", "incisive",
-  "independent", "industrious", "ingenious", "inspire", "instinct", "inventive",
-  "invincible", "keen", "lead", "learn", "logical", "lucid", "masterful", "mindful",
-  "motivated", "open", "original", "outshine", "overcome", "persevere", "pioneer",
-  "precise", "proactive", "profound", "purposeful", "reliable", "remarkable", "renew",
-  "resourceful", "rise", "robust", "sharp", "sincere", "skilled", "soar", "solid",
-  "sovereign", "spark", "steadfast", "stellar", "strive", "sublime", "succeed", "swift",
-  "tactful", "talented", "thrive", "tireless", "transcend", "trust", "truthful",
-  "unbounded", "undaunted", "upright", "vibrant", "vigilant", "visionary", "vital",
-  "wholesome", "willing", "worthy"
-];
 
-async function loadWordOfTheDay() {
-  outputPanel.innerHTML = '<div class="output-empty">Loading Word of the Day...</div>';
-  try {
-    let words = FALLBACK_WORDS;
-    try {
-      const response = await fetch('words.json');
-      if (response.ok) {
-        words = await response.json();
-      }
-    } catch (fetchErr) {
-      console.warn('Local fetch of words.json failed/blocked. Using inline fallback words.', fetchErr);
-    }
 
-    if (!words.length) throw new Error('Words list is empty');
 
-    const today = new Date();
-    const dateStr = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
-    let hash = 0;
-    for (let i = 0; i < dateStr.length; i++) {
-      hash = dateStr.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    const index = Math.abs(hash) % words.length;
-    const dailyWord = words[index];
-
-    const dictResponse = await fetch(`${API_BASE}/${encodeURIComponent(dailyWord)}`);
-    if (!dictResponse.ok) {
-      renderDailyWordFallback(dailyWord);
-      return;
-    }
-    const dictData = await dictResponse.json();
-    renderDailyWord(dictData[0]);
-  } catch (error) {
-    console.error(error);
-    outputPanel.innerHTML = `<div class="output-empty">
-      <p>Search for a word to see definitions, pronunciation, and examples.</p>
-    </div>`;
-  }
-}
-
-function renderDailyWord(entry) {
-  const definition = entry.meanings?.[0]?.definitions?.[0]?.definition || 'No definition available.';
-  const phonetics = entry.phonetics.find((item) => item.text) || {};
-  
-  outputPanel.innerHTML = `
-    <div class="daily-word-container">
-      <div class="daily-word-label">Featured · Word of the Day</div>
-      <div class="daily-word-header">
-        <h2 class="daily-word-title">${entry.word}</h2>
-        ${phonetics.text ? `<span class="pronunciation">${phonetics.text}</span>` : ''}
-      </div>
-      <p class="daily-word-definition">${definition}</p>
-      <button class="daily-word-btn" data-word="${entry.word}">Learn More &rarr;</button>
-    </div>
-  `;
-}
-
-function renderDailyWordFallback(word) {
-  outputPanel.innerHTML = `
-    <div class="daily-word-container">
-      <div class="daily-word-label">Featured · Word of the Day</div>
-      <div class="daily-word-header">
-        <h2 class="daily-word-title">${word}</h2>
-      </div>
-      <p class="daily-word-definition">Discover this word's definition, etymology, and dynamic pronunciation examples.</p>
-      <button class="daily-word-btn" data-word="${word}">Learn More &rarr;</button>
-    </div>
-  `;
-}
 
 async function initApp() {
   initTheme();
   renderRecentSearches();
   renderBookmarks();
-  await loadWordOfTheDay();
+  outputPanel.innerHTML = '<div class="output-empty"><p>Search for a word to see definitions, pronunciation, and examples.</p></div>';
 }
 
 function setTheme(theme) {
@@ -729,15 +617,7 @@ suggestionsPanel.addEventListener('keydown', (event) => {
 });
 
 outputPanel.addEventListener('click', async (event) => {
-  const dailyBtn = event.target.closest('.daily-word-btn');
-  if (dailyBtn) {
-    const word = dailyBtn.dataset.word;
-    searchInput.value = word;
-    lookupWord(word);
-    return;
-  }
-
-  const bookmarkBtn = event.target.closest('.bookmark-button');
+    const bookmarkBtn = event.target.closest('.bookmark-button');
   if (bookmarkBtn) {
     const word = bookmarkBtn.dataset.word;
     toggleBookmark(word);
