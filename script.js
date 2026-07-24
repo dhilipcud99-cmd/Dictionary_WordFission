@@ -379,69 +379,60 @@ function parseEtymology(html, word) {
   return uniqueNodes.reverse();
 }
 
-function buildEtymologyTimelineHtml(etymologyText, word, etymologyUrl) {
+function buildEtymologyTimelineHtml(etymologyText, entry, etymologyUrl) {
+  const word = entry.word;
   const nodes = parseEtymology(etymologyText, word);
-  let timelineTrackHtml = '';
   
+  let originLanguages = 'Historical Germanic / Italic / Indo-European';
+  let rootsListHtml = '<li>Roots and meanings not detailed in database</li>';
+  let meaningEvolutionText = 'Derived from historical roots and adopted into English vocabulary, retaining its semantic focus.';
+  let evolutionPathText = 'Historical development to Modern English';
+
   if (nodes.length > 0) {
+    const langs = [...new Set(nodes.map(n => n.language))].filter(l => l !== 'Modern English');
+    originLanguages = langs.length ? langs.join(', ') : 'Unknown';
+    
+    rootsListHtml = nodes
+      .filter(n => n.language !== 'Modern English')
+      .map(n => `<li><span class="root-lang">[${n.language}]</span> <em>${n.word}</em> ${n.meaning ? `&ndash; &ldquo;${n.meaning}&rdquo;` : ''}</li>`)
+      .join('');
+      
+    if (nodes.length >= 2) {
+      const firstNode = nodes[0];
+      const lastPrevNode = nodes[nodes.length - 2];
+      meaningEvolutionText = `Originating from the ${firstNode.language} term <em>${firstNode.word}</em>${firstNode.meaning ? ` (&ldquo;${firstNode.meaning}&rdquo;)` : ''}, the word transitioned through various historical forms including ${lastPrevNode.language} <em>${lastPrevNode.word}</em>${lastPrevNode.meaning ? ` (&ldquo;${lastPrevNode.meaning}&rdquo;)` : ''} before taking its modern form in English.`;
+    } else {
+      const singleNode = nodes[0];
+      meaningEvolutionText = `Derived from the ${singleNode.language} term <em>${singleNode.word}</em>${singleNode.meaning ? ` (&ldquo;${singleNode.meaning}&rdquo;)` : ''} and adopted into the English vocabulary.`;
+    }
+
+    const pathParts = nodes.map(n => `${n.language} (<em>${n.word}</em>)`);
     if (nodes[nodes.length - 1].word.toLowerCase() !== word.toLowerCase()) {
-      nodes.push({
-        word: word,
-        language: 'Modern English',
-        meaning: 'Current term',
-        date: 'Present'
-      });
+      pathParts.push(`Modern English (<em>${word}</em>)`);
+    }
+    evolutionPathText = pathParts.join(' &rarr; ');
+  } else {
+    const foundLangs = KNOWN_LANGUAGES.filter(lang => etymologyText.toLowerCase().includes(lang.toLowerCase()));
+    if (foundLangs.length > 0) {
+      originLanguages = foundLangs.slice(0, 3).join(', ');
     }
     
-    timelineTrackHtml = nodes
-      .map((node, idx) => {
-        const nodeHtml = `
-          <div class="timeline-node">
-            <span class="node-badge">${node.language}</span>
-            <h4 class="node-word" title="${node.word}">${node.word}</h4>
-            ${node.meaning ? `<p class="node-meaning" title="${node.meaning}">${node.meaning}</p>` : ''}
-            ${node.date ? `<span class="node-date">${node.date}</span>` : ''}
-          </div>
-        `;
-        
-        const connectorHtml = idx < nodes.length - 1
-          ? `
-            <div class="timeline-connector">
-              <svg viewBox="0 0 24 24">
-                <line x1="2" y1="12" x2="20" y2="12"></line>
-                <polyline points="14 6 20 12 14 18"></polyline>
-              </svg>
-            </div>
-          `
-          : '';
-          
-        return nodeHtml + connectorHtml;
-      })
-      .join('');
-  } else {
-    const cleanRawText = etymologyText ? etymologyText.replace(/<[^>]+>/g, '').trim() : 'No origin details available.';
-    const shortDefinition = cleanRawText.length > 120 ? cleanRawText.slice(0, 120) + '...' : cleanRawText;
+    const rootMatches = etymologyText.match(/<i>([^<]+)<\/i>/g);
+    if (rootMatches && rootMatches.length > 0) {
+      const uniqueRoots = [...new Set(rootMatches.map(r => r.replace(/<[^>]+>/g, '').trim()))];
+      rootsListHtml = uniqueRoots.slice(0, 4).map(root => `<li><em>${root}</em></li>`).join('');
+      evolutionPathText = uniqueRoots.map(r => `<em>${r}</em>`).join(' &rarr; ') + ` &rarr; Modern English (<em>${word}</em>)`;
+    } else {
+      evolutionPathText = `Historical Roots &rarr; Modern English (<em>${word}</em>)`;
+    }
     
-    timelineTrackHtml = `
-      <div class="timeline-node" style="max-width: 320px;">
-        <span class="node-badge">Historical Origin</span>
-        <h4 class="node-word" style="white-space: normal;">Roots & Development</h4>
-        <p class="node-meaning" style="-webkit-line-clamp: 3;" title="${cleanRawText}">${shortDefinition}</p>
-      </div>
-      <div class="timeline-connector">
-        <svg viewBox="0 0 24 24">
-          <line x1="2" y1="12" x2="20" y2="12"></line>
-          <polyline points="14 6 20 12 14 18"></polyline>
-        </svg>
-      </div>
-      <div class="timeline-node">
-        <span class="node-badge">Modern English</span>
-        <h4 class="node-word" title="${word}">${word}</h4>
-        <p class="node-meaning">Current term</p>
-        <span class="node-date">Present</span>
-      </div>
-    `;
+    meaningEvolutionText = 'Evolved through historical word forms and adopted into English usage.';
   }
+
+  const presentDayMeaning = entry.meanings?.[0]?.definitions?.[0]?.definition || 'No definition available.';
+  const coreIdeaSummary = entry.meanings?.[0]?.definitions?.[0]?.definition 
+    ? `${shortenText(entry.meanings[0].definitions[0].definition, 110).replace(/\.$/, '')}.`
+    : 'Core idea: reference definition for meanings and usage.';
 
   const clockIconSvg = `
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent);">
@@ -454,11 +445,41 @@ function buildEtymologyTimelineHtml(etymologyText, word, etymologyUrl) {
     <div class="etymology-timeline">
       <div class="etymology-heading">
         ${clockIconSvg}
-        <span>Etymology Timeline</span>
+        <span>Etymology & Word Origin</span>
       </div>
-      <div class="timeline-track">
-        ${timelineTrackHtml}
+      
+      <div class="etymology-details">
+        <div class="etymology-detail-item">
+          <strong>Origin Language(s)</strong>
+          ${originLanguages}
+        </div>
+        <div class="etymology-detail-item">
+          <strong>Root Word(s) & Meanings</strong>
+          <ul>
+            ${rootsListHtml}
+          </ul>
+        </div>
       </div>
+
+      <div class="etymology-details-bottom">
+        <div class="etymology-detail-item">
+          <strong>Word Evolution Path</strong>
+          <p class="evolution-path-text">${evolutionPathText}</p>
+        </div>
+        <div class="etymology-detail-item">
+          <strong>How Meaning Changed Over Time</strong>
+          <p>${meaningEvolutionText}</p>
+        </div>
+        <div class="etymology-detail-item">
+          <strong>Present-Day Meaning</strong>
+          <p>${presentDayMeaning}</p>
+        </div>
+        <div class="etymology-detail-item core-idea-box">
+          <strong>Core Idea</strong>
+          <p>&ldquo;${coreIdeaSummary}&rdquo;</p>
+        </div>
+      </div>
+      
       <p class="etymology-source">More details at <a href="${etymologyUrl}" target="_blank" rel="noopener noreferrer">Etymonline</a></p>
     </div>
   `;
@@ -579,7 +600,7 @@ async function renderResult(entry) {
     : '';
 
   const etymologyHtml = etymologyText
-    ? buildEtymologyTimelineHtml(etymologyText, entry.word, etymologyUrl)
+    ? buildEtymologyTimelineHtml(etymologyText, entry, etymologyUrl)
     : '';
 
   const bookmarks = getBookmarks();
