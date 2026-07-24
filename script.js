@@ -140,7 +140,7 @@ async function initApp() {
   initTheme();
   renderRecentSearches();
   renderBookmarks();
-  outputPanel.innerHTML = '<div class="output-empty"><p>Search for a word to see definitions, pronunciation, and examples.</p></div>';
+  outputPanel.innerHTML = '';
 }
 
 function setTheme(theme) {

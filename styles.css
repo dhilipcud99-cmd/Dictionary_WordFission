@@ -400,13 +400,20 @@ p {
 }
 
 .output-panel {
-  min-height: 280px;
+  min-height: 0;
   border-radius: var(--radius-lg);
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  min-width: 0;
+}
+
+.output-panel:not(:empty) {
   padding: 28px;
   background: var(--surface);
   border: 1px solid var(--border);
   box-shadow: var(--card-shadow);
-  min-width: 0;
 }
 
 .output-empty {
