@@ -1,32 +1,51 @@
 :root {
   color-scheme: light;
-  color: #161b22;
-  background: #f4f7fb;
+  color: #475569;
+  background: #F8FAFC;
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --bg: #f4f7fb;
-  --surface: #ffffff;
-  --surface-strong: #fafbff;
-  --border: #e5e7eb;
-  --text: #161b22;
-  --muted: #5c697a;
-  --muted-strong: #374151;
-  --accent: #3b82f6;
-  --accent-soft: #eef4ff;
-  --card-shadow: 0 30px 80px rgba(15, 23, 42, 0.08);
+  --bg: #F8FAFC;
+  --surface: #FFFFFF;
+  --surface-strong: #FFFFFF;
+  --border: #E2E8F0;
+  --text: #475569;
+  --heading: #0F172A;
+  --primary: #2563EB;
+  --primary-hover: #1D4ED8;
+  --accent: #3B82F6;
+  --accent-soft: #DBEAFE;
+  --tag-bg: #DBEAFE;
+  --tag-text: #1D4ED8;
+  --bookmark: #FBBF24;
+  --input-bg: #F1F5F9;
+  --muted: #64748B;
+  --muted-strong: #475569;
+  --card-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.05), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
+  --radius-lg: 16px;
+  --radius-md: 12px;
+  --radius-sm: 8px;
 }
 
 .dark-theme {
   color-scheme: dark;
-  --bg: #0f172a;
-  --surface: #111827;
-  --surface-strong: #1f2937;
-  --border: #374151;
-  --text: #e2e8f0;
-  --muted: #94a3b8;
-  --muted-strong: #cbd5e1;
-  --accent: #60a5fa;
-  --accent-soft: #1e3a8a;
-  --card-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
+  color: #94A3B8;
+  background: #0F172A;
+  --bg: #0F172A;
+  --surface: #1E293B;
+  --surface-strong: #1E293B;
+  --border: #334155;
+  --text: #94A3B8;
+  --heading: #F8FAFC;
+  --primary: #3B82F6;
+  --primary-hover: #60A5FA;
+  --accent: #60A5FA;
+  --accent-soft: rgba(59, 130, 246, 0.2);
+  --tag-bg: rgba(59, 130, 246, 0.15);
+  --tag-text: #60A5FA;
+  --bookmark: #FBBF24;
+  --input-bg: #1E293B;
+  --muted: #64748B;
+  --muted-strong: #94A3B8;
+  --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.35), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
 }
 
 * {
@@ -39,9 +58,7 @@ body {
   display: grid;
   place-items: center;
   padding: 32px;
-  background: radial-gradient(circle at top, rgba(109, 142, 255, 0.18), transparent 32%),
-    radial-gradient(circle at bottom right, rgba(255, 208, 170, 0.2), transparent 18%),
-    var(--bg);
+  background: var(--bg);
 }
 
 .app-shell {
@@ -49,8 +66,9 @@ body {
   color: var(--text);
   box-shadow: var(--card-shadow);
   width: min(1080px, 100%);
-  border-radius: 28px;
+  border-radius: var(--radius-lg);
   padding: 40px 44px;
+  border: 1px solid var(--border);
 }
 
 .hero {
@@ -64,10 +82,10 @@ body {
 .hero-icon {
   width: 56px;
   height: 56px;
-  border-radius: 18px;
+  border-radius: var(--radius-md);
   display: grid;
   place-items: center;
-  background: var(--accent-soft);
+  background: var(--tag-bg);
   font-size: 26px;
 }
 
@@ -111,9 +129,10 @@ p {
   grid-template-columns: auto 1fr auto;
   gap: 12px;
   align-items: center;
-  background: var(--accent-soft);
-  border-radius: 16px;
-  padding: 14px 18px;
+  background: var(--input-bg);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  border: 1px solid var(--border);
 }
 
 .suggestions-panel {
@@ -124,8 +143,8 @@ p {
   z-index: 100;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 16px;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+  border-radius: var(--radius-md);
+  box-shadow: var(--card-shadow);
   max-height: 280px;
   overflow-y: auto;
   margin-top: 8px;
@@ -143,7 +162,7 @@ p {
   border: none;
   color: var(--text);
   padding: 10px 14px;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   font-size: 0.95rem;
   transition: all 0.15s ease;
@@ -153,8 +172,8 @@ p {
 
 .suggestion-item:hover,
 .suggestion-item.active {
-  background: var(--accent-soft);
-  color: var(--accent);
+  background: var(--tag-bg);
+  color: var(--tag-text);
   transform: translateX(4px);
 }
 
@@ -176,17 +195,19 @@ p {
 
 .word-tag {
   border: 1px solid transparent;
-  background: var(--accent-soft);
-  color: var(--text);
-  padding: 8px 12px;
+  background: var(--tag-bg);
+  color: var(--tag-text);
+  padding: 6px 12px;
   border-radius: 999px;
   cursor: pointer;
-  transition: background 0.2s ease, transform 0.2s ease;
+  font-size: 0.88rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
 }
 
 .word-tag:hover,
 .word-tag:focus {
-  background: var(--accent);
+  background: var(--primary);
   color: #fff;
   transform: translateY(-1px);
 }
@@ -210,16 +231,21 @@ p {
 
 #search-button {
   border: none;
-  border-radius: 12px;
-  background: var(--accent);
+  border-radius: var(--radius-sm);
+  background: var(--primary);
   color: white;
-  padding: 12px 18px;
+  padding: 8px 14px;
   cursor: pointer;
   font-weight: 600;
+  transition: background-color 0.2s ease, transform 0.1s ease;
 }
 
 #search-button:hover {
-  background: #2563eb;
+  background: var(--primary-hover);
+}
+
+#search-button:active {
+  transform: scale(0.98);
 }
 
 .hint-line {
@@ -234,18 +260,22 @@ p {
 }
 
 .quick-words button {
-  border: 1px solid #dbeafe;
-  background: white;
-  color: #1f2937;
-  padding: 10px 16px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  padding: 8px 14px;
   border-radius: 999px;
   cursor: pointer;
-  transition: transform 0.2s ease, border-color 0.2s ease;
+  font-size: 0.88rem;
+  font-weight: 500;
+  transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
 }
 
 .quick-words button:hover {
   transform: translateY(-1px);
-  border-color: #93c5fd;
+  border-color: var(--primary);
+  background: var(--tag-bg);
+  color: var(--tag-text);
 }
 
 .main-layout {
@@ -261,18 +291,18 @@ p {
 }
 
 .sidebar-section {
-  background: var(--surface-strong);
+  background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
   padding: 22px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.01);
+  box-shadow: var(--card-shadow);
 }
 
 .sidebar-section h3 {
   margin: 0 0 16px;
   font-size: 1rem;
   font-weight: 700;
-  color: var(--text);
+  color: var(--heading);
   border-bottom: 1px solid var(--border);
   padding-bottom: 8px;
 }
@@ -308,9 +338,9 @@ p {
 
 .recent-item:hover,
 .favorite-item:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-  background: var(--accent-soft);
+  border-color: var(--primary);
+  color: var(--tag-text);
+  background: var(--tag-bg);
   transform: translateY(-1px);
 }
 
@@ -332,10 +362,11 @@ p {
 
 .output-panel {
   min-height: 280px;
-  border-radius: 24px;
+  border-radius: var(--radius-lg);
   padding: 28px;
-  background: var(--surface-strong);
+  background: var(--surface);
   border: 1px solid var(--border);
+  box-shadow: var(--card-shadow);
   min-width: 0;
 }
 
@@ -379,8 +410,8 @@ p {
   padding: 22px;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 20px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.01);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--card-shadow);
   min-width: 0;
   max-width: 100%;
 }
@@ -389,7 +420,7 @@ p {
   margin: 0 0 16px;
   font-size: 1rem;
   font-weight: 700;
-  color: var(--text);
+  color: var(--heading);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -400,8 +431,8 @@ p {
   grid-template-columns: 1fr 1.2fr;
   gap: 18px;
   margin-bottom: 20px;
-  background: var(--surface-strong);
-  border-radius: 16px;
+  background: var(--input-bg);
+  border-radius: var(--radius-md);
   padding: 18px;
   border: 1px solid var(--border);
 }
@@ -448,10 +479,10 @@ p {
   line-height: 1.6;
   font-weight: 500;
   color: var(--text);
-  background: var(--surface);
+  background: var(--input-bg);
   border: 1px solid var(--border);
   padding: 12px 16px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   margin: 6px 0 0;
 }
 
@@ -462,9 +493,9 @@ p {
 }
 
 .core-idea-box {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.07) 0%, rgba(59, 130, 246, 0.02) 100%);
-  border: 1px solid rgba(59, 130, 246, 0.16);
-  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.07) 0%, rgba(37, 99, 235, 0.02) 100%);
+  border: 1px solid rgba(37, 99, 235, 0.16);
+  border-radius: var(--radius-md);
   padding: 16px 20px;
 }
 
@@ -668,23 +699,30 @@ p {
 }
 
 .audio-button:hover,
-.bookmark-button:hover {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-  color: var(--accent);
+.bookmark-button:not(.active):hover {
+  border-color: var(--primary);
+  background: var(--tag-bg);
+  color: var(--tag-text);
+  transform: translateY(-2px);
+}
+
+.bookmark-button.active:hover {
+  background: #f59e0b;
+  border-color: #f59e0b;
   transform: translateY(-2px);
 }
 
 .definition-header h2 {
   margin: 0;
   font-size: 1.9rem;
+  color: var(--heading);
   display: inline-flex;
   align-items: center;
   gap: 12px;
 }
 
 .pronunciation {
-  color: var(--accent);
+  color: var(--tag-text);
   font-weight: 600;
   font-size: 1.1rem;
   margin-top: 4px;
@@ -699,7 +737,7 @@ p {
 .meaning-block h3 {
   margin: 0 0 12px;
   font-size: 1.1rem;
-  color: var(--text);
+  color: var(--heading);
 }
 
 .meaning-list {
@@ -741,13 +779,14 @@ p {
   margin-top: 24px;
   padding: 18px;
   border: 1px dashed var(--border);
-  border-radius: 18px;
+  border-radius: var(--radius-lg);
   background: var(--surface);
 }
 
 .fallback-examples h3 {
   margin: 0 0 12px;
   font-size: 1rem;
+  color: var(--heading);
 }
 
 .fallback-examples li {
@@ -779,12 +818,12 @@ p {
   display: grid;
   gap: 16px;
   padding: 26px;
-  background: linear-gradient(135deg, var(--surface) 0%, var(--surface-strong) 100%);
+  background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
   position: relative;
   overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.02);
+  box-shadow: var(--card-shadow);
   animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
@@ -795,14 +834,14 @@ p {
   left: 0;
   width: 4px;
   height: 100%;
-  background: var(--accent);
+  background: var(--primary);
 }
 
 .daily-word-label {
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 1.5px;
-  color: var(--accent);
+  color: var(--primary);
   text-transform: uppercase;
 }
 
@@ -817,6 +856,7 @@ p {
   font-size: 1.8rem;
   font-weight: 800;
   text-transform: capitalize;
+  color: var(--heading);
 }
 
 .daily-word-definition {
@@ -829,10 +869,10 @@ p {
 .daily-word-btn {
   justify-self: start;
   border: none;
-  background: var(--accent-soft);
-  color: var(--accent);
+  background: var(--tag-bg);
+  color: var(--tag-text);
   padding: 10px 20px;
-  border-radius: 12px;
+  border-radius: var(--radius-sm);
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -840,7 +880,7 @@ p {
 }
 
 .daily-word-btn:hover {
-  background: var(--accent);
+  background: var(--primary);
   color: #fff;
   transform: translateY(-1px);
 }
