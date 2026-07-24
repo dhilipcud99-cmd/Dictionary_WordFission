@@ -378,7 +378,7 @@ function buildEtymologyCardHtml(word, etymologyText, entry, etymologyUrl) {
 
     rootsListHtml = nodes
       .filter(n => n.language !== 'Modern English')
-      .map(n => '<li><span class="etym-lang-badge">[' + n.language.toUpperCase() + ']</span> <em>' + n.word + '</em>' + (n.meaning ? ' – “' + n.meaning + '”' : '') + '</li>')
+      .map(n => '<li><span class="etym-lang-badge">[' + n.language.toUpperCase() + ']</span> <em>' + n.word + '</em>' + (n.meaning ? ' – “<strong>' + n.meaning + '</strong>”' : '') + '</li>')
       .join('');
 
     const pathParts = nodes.map(n => n.language + ' (<em>' + n.word + '</em>)');
@@ -390,14 +390,14 @@ function buildEtymologyCardHtml(word, etymologyText, entry, etymologyUrl) {
     if (nodes.length >= 2) {
       const first = nodes[0], last = nodes[nodes.length - 2];
       meaningEvolutionText = 'Originating from the ' + first.language + ' term <em>' + first.word + '</em>' +
-        (first.meaning ? ' (“' + first.meaning + '”)' : '') +
+        (first.meaning ? ' (“<strong>' + first.meaning + '</strong>”)' : '') +
         ', the word transitioned through various historical forms including ' + last.language + ' <em>' + last.word + '</em>' +
-        (last.meaning ? ' (“' + last.meaning + '”)' : '') +
+        (last.meaning ? ' (“<strong>' + last.meaning + '</strong>”)' : '') +
         ' before taking its modern form in English.';
     } else {
       const n = nodes[0];
       meaningEvolutionText = 'Derived from the ' + n.language + ' term <em>' + n.word + '</em>' +
-        (n.meaning ? ' (“' + n.meaning + '”)' : '') + ' and adopted into the English vocabulary.';
+        (n.meaning ? ' (“<strong>' + n.meaning + '</strong>”)' : '') + ' and adopted into the English vocabulary.';
     }
   } else if (etymologyText) {
     const foundLangs = KNOWN_LANGUAGES.filter(lang => etymologyText.toLowerCase().includes(lang.toLowerCase()));
@@ -444,7 +444,7 @@ function buildEtymologyCardHtml(word, etymologyText, entry, etymologyUrl) {
       </div>
       <div class="etym-core-idea">
         <div class="etym-section-label">CORE IDEA</div>
-        <p>&ldquo;${coreIdea}&rdquo;</p>
+        <p>&ldquo;<strong>${coreIdea}</strong>&rdquo;</p>
       </div>
       <p class="etymology-source">More details at <a href="${etymologyUrl}" target="_blank" rel="noopener noreferrer">Etymonline</a></p>
     </div>
