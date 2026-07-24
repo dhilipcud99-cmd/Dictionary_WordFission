@@ -86,8 +86,8 @@ body {
 }
 
 .hero-icon {
-  width: 56px;
-  height: 56px;
+  width: 72px;
+  height: 72px;
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
@@ -95,6 +95,7 @@ body {
   background: var(--tag-bg);
   overflow: hidden;
   border: 1px solid var(--border);
+  flex-shrink: 0;
 }
 
 .brand-logo {
@@ -413,6 +414,7 @@ p {
   padding: 28px;
   background: var(--surface);
   border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
   box-shadow: var(--card-shadow);
 }
 
@@ -460,10 +462,10 @@ p {
 .etymology-card {
   margin: 16px 0 0;
   padding: 22px;
-  background: var(--surface);
+  background: var(--input-bg);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  box-shadow: var(--card-shadow);
+  box-shadow: none;
   display: grid;
   gap: 18px;
 }
@@ -497,7 +499,7 @@ p {
   font-weight: 700;
   letter-spacing: 1px;
   text-transform: uppercase;
-  color: var(--accent);
+  color: #64748B;
   margin-bottom: 8px;
 }
 
@@ -894,11 +896,6 @@ p {
   border-color: var(--primary);
   transform: translateY(-1px);
 }
-  text-align: center;
-  margin-top: 16px;
-  color: var(--muted);
-  font-size: 0.95rem;
-}
 
 .visually-hidden {
   position: absolute;
@@ -960,27 +957,28 @@ p {
 
 
 .translation-section {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
+  border-top: 1px solid var(--border);
+  padding-top: 18px;
 }
 
 .translation-header {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .translation-title {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 600;
-  color: var(--muted);
+  color: #64748B;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
   white-space: nowrap;
 }
 
 .translation-dropdown {
-  padding: 7px 12px;
+  padding: 6px 10px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--input-bg);
@@ -990,7 +988,7 @@ p {
   cursor: pointer;
   outline: none;
   transition: var(--transition);
-  min-width: 150px;
+  min-width: 140px;
 }
 
 .translation-dropdown:focus {
@@ -999,45 +997,47 @@ p {
 }
 
 .translation-result {
-  margin-top: 10px;
-  width: 100%;
+  margin-top: 12px;
 }
 
 .translation-card {
   display: grid;
-  gap: 10px;
+  gap: 8px;
+  padding: 14px 16px;
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
 }
 
 .translation-row {
   display: grid;
-  grid-template-columns: 160px 1fr;
-  gap: 12px;
+  grid-template-columns: 140px 1fr;
+  gap: 10px;
   align-items: baseline;
-  padding: 10px 14px;
-  background: var(--input-bg);
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
 }
 
 .translation-label {
   font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  color: var(--accent);
+  font-weight: 600;
+  color: #64748B;
   white-space: nowrap;
 }
 
 .translation-value {
   font-size: 0.93rem;
-  color: var(--text);
+  color: #0D1321;
   font-weight: 600;
   line-height: 1.5;
+}
+
+.dark-theme .translation-value {
+  color: var(--text);
 }
 
 .translation-def {
   font-weight: 400;
   font-style: italic;
+  color: var(--muted-strong);
 }
 
 .translation-loading,
@@ -1050,6 +1050,6 @@ p {
 @media (max-width: 500px) {
   .translation-row {
     grid-template-columns: 1fr;
-    gap: 4px;
+    gap: 2px;
   }
 }
