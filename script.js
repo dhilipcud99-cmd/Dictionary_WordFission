@@ -584,9 +584,7 @@ async function renderResult(entry) {
     </svg>
   `;
 
-  const pronunciationHtml = phonetics.text || entry.phonetic
-    ? `<span class="pronunciation">${phonetics.text || entry.phonetic}</span>`
-    : '';
+  const pronunciationHtml = '';
 
   outputPanel.innerHTML = `
     <div class="definition-card">
