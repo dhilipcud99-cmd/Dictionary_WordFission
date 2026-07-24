@@ -20,19 +20,39 @@
     <main class="content">
       <section class="search-panel">
         <label for="search-input" class="visually-hidden">Search for any word</label>
-        <div class="search-box">
-          <span class="search-icon">🔍</span>
-          <input id="search-input" type="text" placeholder="Search for any word..." autocomplete="off" />
-          <button id="search-button">Search</button>
+        <div class="search-container">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input id="search-input" type="text" placeholder="Search for any word..." autocomplete="off" />
+            <button id="search-button">Search</button>
+          </div>
+          <div class="suggestions-panel" id="suggestions-panel" aria-live="polite"></div>
         </div>
-        <div class="suggestions-panel" id="suggestions-panel" aria-live="polite"></div>
       </section>
 
-      <section class="output-panel" id="output-panel">
-        <div class="output-empty">
-          <p>Search for a word to see definitions, pronunciation, and examples.</p>
-        </div>
-      </section>
+      <div class="main-layout">
+        <section class="output-panel" id="output-panel">
+          <div class="output-empty">
+            <p>Search for a word to see definitions, pronunciation, and examples.</p>
+          </div>
+        </section>
+
+        <aside class="sidebar-panel">
+          <section class="sidebar-section" id="recent-section">
+            <h3>Recent Searches</h3>
+            <div class="recent-list" id="recent-list">
+              <p class="sidebar-empty">No recent searches</p>
+            </div>
+          </section>
+
+          <section class="sidebar-section" id="favorites-section">
+            <h3>Bookmarked Words</h3>
+            <div class="favorites-list" id="favorites-list">
+              <p class="sidebar-empty">No bookmarked words</p>
+            </div>
+          </section>
+        </aside>
+      </div>
     </main>
 
     <footer class="footer">

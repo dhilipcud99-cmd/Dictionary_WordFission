@@ -3,6 +3,8 @@ const searchButton = document.getElementById('search-button');
 const outputPanel = document.getElementById('output-panel');
 const themeToggle = document.getElementById('theme-toggle');
 const suggestionsPanel = document.getElementById('suggestions-panel');
+const recentList = document.getElementById('recent-list');
+const favoritesList = document.getElementById('favorites-list');
 
 const API_BASE = 'https://api.dictionaryapi.dev/api/v2/entries/en';
 const AUTOCOMPLETE_API = 'https://api.datamuse.com/sug';
@@ -55,8 +57,165 @@ function clearSuggestions() {
   suggestionIndex = -1;
 }
 
+// Storage and State Management
+function getRecentSearches() {
+  try {
+    const list = localStorage.getItem('wordfission-recents');
+    return list ? JSON.parse(list) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveRecentSearch(word) {
+  if (!word) return;
+  const wordLower = word.toLowerCase().trim();
+  let recents = getRecentSearches();
+  recents = recents.filter(w => w.toLowerCase() !== wordLower);
+  recents.unshift(word);
+  if (recents.length > 5) recents.pop();
+  localStorage.setItem('wordfission-recents', JSON.stringify(recents));
+  renderRecentSearches();
+}
+
+function renderRecentSearches() {
+  const recents = getRecentSearches();
+  if (recents.length === 0) {
+    recentList.innerHTML = '<p class="sidebar-empty">No recent searches</p>';
+    return;
+  }
+  recentList.innerHTML = recents
+    .map(word => `<button type="button" class="recent-item" data-word="${word}">${word}</button>`)
+    .join('');
+}
+
+function getBookmarks() {
+  try {
+    const list = localStorage.getItem('wordfission-bookmarks');
+    return list ? JSON.parse(list) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function toggleBookmark(word) {
+  if (!word) return;
+  const wordLower = word.toLowerCase().trim();
+  let bookmarks = getBookmarks();
+  const exists = bookmarks.some(w => w.toLowerCase() === wordLower);
+  if (exists) {
+    bookmarks = bookmarks.filter(w => w.toLowerCase() !== wordLower);
+  } else {
+    bookmarks.push(word);
+  }
+  localStorage.setItem('wordfission-bookmarks', JSON.stringify(bookmarks));
+  renderBookmarks();
+  const btn = document.querySelector('.bookmark-button');
+  if (btn && btn.dataset.word.toLowerCase() === wordLower) {
+    btn.classList.toggle('active', !exists);
+  }
+}
+
+function renderBookmarks() {
+  const bookmarks = getBookmarks();
+  if (bookmarks.length === 0) {
+    favoritesList.innerHTML = '<p class="sidebar-empty">No bookmarked words</p>';
+    return;
+  }
+  favoritesList.innerHTML = bookmarks
+    .map(word => `
+      <div class="favorite-item" data-word="${word}">
+        <span>${word}</span>
+        <button type="button" class="remove-bookmark" data-word="${word}" aria-label="Remove bookmark">&times;</button>
+      </div>
+    `)
+    .join('');
+}
+
+const FALLBACK_WORDS = [
+  "ability", "beautiful", "creative", "dynamic", "eloquent", "frequency", "generous",
+  "harmony", "infinite", "journey", "knowledge", "luminous", "magnificent", "novel",
+  "optimistic", "passionate", "quantum", "resilient", "sincere", "thoughtful", "unique",
+  "vibrant", "wisdom", "xenon", "yesterday", "zenith", "adventure", "bravery", "clarity",
+  "dignity", "empathy", "flourish", "gratitude", "honesty", "insight", "jubilant",
+  "kindness", "loyalty", "modesty", "nurture", "originate", "patience", "respect",
+  "strength", "triumph", "understanding", "valiant", "wonder", "youthful", "zeal"
+];
+
+async function loadWordOfTheDay() {
+  outputPanel.innerHTML = '<div class="output-empty">Loading Word of the Day...</div>';
+  try {
+    let words = FALLBACK_WORDS;
+    try {
+      const response = await fetch('words.json');
+      if (response.ok) {
+        words = await response.json();
+      }
+    } catch (fetchErr) {
+      console.warn('Local fetch of words.json failed/blocked. Using inline fallback words.', fetchErr);
+    }
+
+    if (!words.length) throw new Error('Words list is empty');
+
+    const today = new Date();
+    const dateStr = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
+    let hash = 0;
+    for (let i = 0; i < dateStr.length; i++) {
+      hash = dateStr.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % words.length;
+    const dailyWord = words[index];
+
+    const dictResponse = await fetch(`${API_BASE}/${encodeURIComponent(dailyWord)}`);
+    if (!dictResponse.ok) {
+      renderDailyWordFallback(dailyWord);
+      return;
+    }
+    const dictData = await dictResponse.json();
+    renderDailyWord(dictData[0]);
+  } catch (error) {
+    console.error(error);
+    outputPanel.innerHTML = `<div class="output-empty">
+      <p>Search for a word to see definitions, pronunciation, and examples.</p>
+    </div>`;
+  }
+}
+
+function renderDailyWord(entry) {
+  const definition = entry.meanings?.[0]?.definitions?.[0]?.definition || 'No definition available.';
+  const phonetics = entry.phonetics.find((item) => item.text) || {};
+  
+  outputPanel.innerHTML = `
+    <div class="daily-word-container">
+      <div class="daily-word-label">Featured · Word of the Day</div>
+      <div class="daily-word-header">
+        <h2 class="daily-word-title">${entry.word}</h2>
+        ${phonetics.text ? `<span class="pronunciation">${phonetics.text}</span>` : ''}
+      </div>
+      <p class="daily-word-definition">${definition}</p>
+      <button class="daily-word-btn" data-word="${entry.word}">Learn More &rarr;</button>
+    </div>
+  `;
+}
+
+function renderDailyWordFallback(word) {
+  outputPanel.innerHTML = `
+    <div class="daily-word-container">
+      <div class="daily-word-label">Featured · Word of the Day</div>
+      <div class="daily-word-header">
+        <h2 class="daily-word-title">${word}</h2>
+      </div>
+      <p class="daily-word-definition">Discover this word's definition, etymology, and dynamic pronunciation examples.</p>
+      <button class="daily-word-btn" data-word="${word}">Learn More &rarr;</button>
+    </div>
+  `;
+}
+
 async function initApp() {
   initTheme();
+  renderRecentSearches();
+  renderBookmarks();
+  await loadWordOfTheDay();
 }
 
 function setTheme(theme) {
@@ -176,6 +335,7 @@ async function lookupWord(word) {
     }
     const data = await response.json();
     await renderResult(data[0]);
+    saveRecentSearch(word);
   } catch (error) {
     outputPanel.innerHTML = `<div class="output-empty">Unable to find "${word}". Try another word.</div>`;
   }
@@ -266,16 +426,40 @@ async function renderResult(entry) {
     ? `<div class="etymology-section"><div class="etymology-heading">Etymology Breakdown</div>${etymologyText}<p class="etymology-source">More details at <a href="${etymologyUrl}" target="_blank" rel="noopener noreferrer">Etymonline</a></p></div>`
     : '';
 
+  const bookmarks = getBookmarks();
+  const isBookmarked = bookmarks.some(w => w.toLowerCase() === entry.word.toLowerCase());
+  const activeClass = isBookmarked ? 'active' : '';
+
+  const starSvg = `
+    <svg viewBox="0 0 24 24">
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+    </svg>
+  `;
+  const audioSvg = `
+    <svg viewBox="0 0 24 24">
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+      <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+    </svg>
+  `;
+
+  const pronunciationHtml = phonetics.text || entry.phonetic
+    ? `<span class="pronunciation">${phonetics.text || entry.phonetic}</span>`
+    : '';
+
   outputPanel.innerHTML = `
     <div class="definition-card">
       <div class="definition-header">
         <div>
           <h2>${entry.word}</h2>
+          ${pronunciationHtml}
           ${summaryHtml}
           ${relatedWordsHtml}
           ${etymologyHtml}
         </div>
-        ${audioSource.audio ? `<button class="audio-button" data-audio="${audioSource.audio}" aria-label="Play pronunciation">🔊</button>` : ''}
+        <div style="display: flex; gap: 8px;">
+          <button class="bookmark-button ${activeClass}" data-word="${entry.word}" aria-label="Bookmark word">${starSvg}</button>
+          ${audioSource.audio ? `<button class="audio-button" data-audio="${audioSource.audio}" aria-label="Play pronunciation">${audioSvg}</button>` : ''}
+        </div>
       </div>
       ${meaningsHtml}
       ${fallbackHtml}
@@ -369,6 +553,21 @@ suggestionsPanel.addEventListener('keydown', (event) => {
 });
 
 outputPanel.addEventListener('click', (event) => {
+  const dailyBtn = event.target.closest('.daily-word-btn');
+  if (dailyBtn) {
+    const word = dailyBtn.dataset.word;
+    searchInput.value = word;
+    lookupWord(word);
+    return;
+  }
+
+  const bookmarkBtn = event.target.closest('.bookmark-button');
+  if (bookmarkBtn) {
+    const word = bookmarkBtn.dataset.word;
+    toggleBookmark(word);
+    return;
+  }
+
   const relatedButton = event.target.closest('.word-tag');
   if (relatedButton) {
     const value = relatedButton.dataset.word;
@@ -385,6 +584,37 @@ outputPanel.addEventListener('click', (event) => {
   if (!src) return;
   const audio = new Audio(src);
   audio.play();
+});
+
+recentList.addEventListener('click', (event) => {
+  const btn = event.target.closest('.recent-item');
+  if (btn) {
+    const word = btn.dataset.word;
+    searchInput.value = word;
+    lookupWord(word);
+  }
+});
+
+favoritesList.addEventListener('click', (event) => {
+  const removeBtn = event.target.closest('.remove-bookmark');
+  if (removeBtn) {
+    event.stopPropagation();
+    const word = removeBtn.dataset.word;
+    toggleBookmark(word);
+    return;
+  }
+  const item = event.target.closest('.favorite-item');
+  if (item) {
+    const word = item.dataset.word;
+    searchInput.value = word;
+    lookupWord(word);
+  }
+});
+
+document.addEventListener('click', (event) => {
+  if (!event.target.closest('.search-container')) {
+    clearSuggestions();
+  }
 });
 
 themeToggle.addEventListener('click', () => {

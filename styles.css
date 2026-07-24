@@ -101,6 +101,11 @@ p {
   gap: 20px;
 }
 
+.search-container {
+  position: relative;
+  width: 100%;
+}
+
 .search-box {
   display: grid;
   grid-template-columns: auto 1fr auto;
@@ -112,20 +117,45 @@ p {
 }
 
 .suggestions-panel {
-  margin-top: 10px;
-  display: grid;
-  gap: 8px;
-}
-
-
-.suggestion-item {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 100;
   background: var(--surface);
   border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+  max-height: 280px;
+  overflow-y: auto;
+  margin-top: 8px;
+  padding: 8px;
+  display: none;
+}
+
+.suggestions-panel:not(:empty) {
+  display: grid;
+  gap: 4px;
+}
+
+.suggestion-item {
+  background: transparent;
+  border: none;
   color: var(--text);
-  padding: 12px 14px;
-  border-radius: 14px;
+  padding: 10px 14px;
+  border-radius: 10px;
   cursor: pointer;
-  transition: transform 0.2s ease, background 0.2s ease;
+  font-size: 0.95rem;
+  transition: all 0.15s ease;
+  text-align: left;
+  width: 100%;
+}
+
+.suggestion-item:hover,
+.suggestion-item.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+  transform: translateX(4px);
 }
 
 .more-words-section {
@@ -135,7 +165,7 @@ p {
 .more-words-section h3 {
   margin: 0 0 10px;
   font-size: 1rem;
-  color: var(--text-secondary);
+  color: var(--text);
 }
 
 .word-tags {
@@ -159,12 +189,6 @@ p {
   background: var(--accent);
   color: #fff;
   transform: translateY(-1px);
-}
-
-.suggestion-item:hover,
-.suggestion-item.active {
-  transform: translateY(-1px);
-  background: var(--surface-strong);
 }
 
 .search-icon {
@@ -209,7 +233,6 @@ p {
   gap: 12px;
 }
 
-
 .quick-words button {
   border: 1px solid #dbeafe;
   background: white;
@@ -223,6 +246,88 @@ p {
 .quick-words button:hover {
   transform: translateY(-1px);
   border-color: #93c5fd;
+}
+
+.main-layout {
+  display: grid;
+  grid-template-columns: 2.2fr 1fr;
+  gap: 28px;
+  align-items: start;
+}
+
+.sidebar-panel {
+  display: grid;
+  gap: 24px;
+}
+
+.sidebar-section {
+  background: var(--surface-strong);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 22px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.01);
+}
+
+.sidebar-section h3 {
+  margin: 0 0 16px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+}
+
+.sidebar-empty {
+  font-size: 0.9rem;
+  color: var(--muted);
+  font-style: italic;
+  margin: 4px 0 0;
+}
+
+.recent-list,
+.favorites-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.recent-item,
+.favorite-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.recent-item:hover,
+.favorite-item:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+  transform: translateY(-1px);
+}
+
+.favorite-item .remove-bookmark {
+  color: var(--muted);
+  font-size: 1.1rem;
+  line-height: 1;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 2px;
+  transition: color 0.15s ease;
+}
+
+.favorite-item .remove-bookmark:hover {
+  color: #ef4444;
 }
 
 .output-panel {
@@ -326,28 +431,65 @@ p {
   text-decoration: underline;
 }
 
-.audio-button {
-  border: none;
-  background: var(--accent);
-  color: white;
+.audio-button,
+.bookmark-button {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
   border-radius: 12px;
-  padding: 10px 14px;
+  padding: 10px;
   cursor: pointer;
-  font-size: 0.95rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  width: 42px;
+  height: 42px;
 }
 
-.audio-button:hover {
-  background: #1d4ed8;
+.audio-button svg,
+.bookmark-button svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.bookmark-button.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #ffffff;
+}
+
+.bookmark-button.active svg {
+  fill: currentColor;
+}
+
+.audio-button:hover,
+.bookmark-button:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+  transform: translateY(-2px);
 }
 
 .definition-header h2 {
   margin: 0;
   font-size: 1.9rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .pronunciation {
   color: var(--accent);
   font-weight: 600;
+  font-size: 1.1rem;
+  margin-top: 4px;
+  display: block;
 }
 
 .meaning-block {
@@ -433,6 +575,102 @@ p {
   border: 0;
 }
 
+/* Word of the Day styling */
+.daily-word-container {
+  display: grid;
+  gap: 16px;
+  padding: 26px;
+  background: linear-gradient(135deg, var(--surface) 0%, var(--surface-strong) 100%);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.02);
+  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.daily-word-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--accent);
+}
+
+.daily-word-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--accent);
+  text-transform: uppercase;
+}
+
+.daily-word-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.daily-word-title {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.daily-word-definition {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: var(--muted-strong);
+}
+
+.daily-word-btn {
+  justify-self: start;
+  border: none;
+  background: var(--accent-soft);
+  color: var(--accent);
+  padding: 10px 20px;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 8px;
+}
+
+.daily-word-btn:hover {
+  background: var(--accent);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+/* Animations */
+.definition-card {
+  display: grid;
+  gap: 22px;
+  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive Queries */
+@media (max-width: 820px) {
+  .main-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 700px) {
   .app-shell {
     padding: 28px 22px;
@@ -446,3 +684,4 @@ p {
     width: 100%;
   }
 }
+
