@@ -411,15 +411,21 @@ p {
 }
 
 .definition-header {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
+  display: grid;
   gap: 16px;
-  align-items: baseline;
 }
 
-.definition-header > div:first-child {
-  min-width: 0;
+.definition-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.definition-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .word-summary {

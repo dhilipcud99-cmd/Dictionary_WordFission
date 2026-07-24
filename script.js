@@ -589,17 +589,16 @@ async function renderResult(entry) {
   outputPanel.innerHTML = `
     <div class="definition-card">
       <div class="definition-header">
-        <div>
+        <div class="definition-title-row">
           <h2>${entry.word}</h2>
-          ${pronunciationHtml}
-          ${summaryHtml}
-          ${relatedWordsHtml}
-          ${etymologyHtml}
+          <div class="definition-actions">
+            <button class="bookmark-button ${activeClass}" data-word="${entry.word}" aria-label="Bookmark word">${starSvg}</button>
+            ${audioSource.audio ? `<button class="audio-button" data-audio="${audioSource.audio}" aria-label="Play pronunciation">${audioSvg}</button>` : ''}
+          </div>
         </div>
-        <div style="display: flex; gap: 8px;">
-          <button class="bookmark-button ${activeClass}" data-word="${entry.word}" aria-label="Bookmark word">${starSvg}</button>
-          ${audioSource.audio ? `<button class="audio-button" data-audio="${audioSource.audio}" aria-label="Play pronunciation">${audioSvg}</button>` : ''}
-        </div>
+        ${summaryHtml}
+        ${relatedWordsHtml}
+        ${etymologyHtml}
       </div>
       ${meaningsHtml}
       ${fallbackHtml}
