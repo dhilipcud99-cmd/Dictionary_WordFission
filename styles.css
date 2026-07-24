@@ -124,6 +124,12 @@ h1 {
   text-decoration: underline;
 }
 
+.brand-tick {
+  color: #22c55e;
+  font-size: 0.75em;
+  vertical-align: middle;
+}
+
 p {
   margin: 8px 0 0;
   color: var(--text);
