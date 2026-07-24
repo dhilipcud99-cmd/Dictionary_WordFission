@@ -570,6 +570,7 @@ async function renderResult(entry) {
         <div class="definition-title-row">
           <h2>${entry.word}</h2>
           <div class="definition-actions">
+            ${buildTranslationSectionHtml(entry.word)}
             <button class="bookmark-button ${activeClass}" data-word="${entry.word}" aria-label="Bookmark word">${starSvg}</button>
             ${audioSource.audio ? `<button class="audio-button" data-audio="${audioSource.audio}" aria-label="Play pronunciation">${audioSvg}</button>` : ''}
           </div>
@@ -582,7 +583,6 @@ async function renderResult(entry) {
       ${fallbackHtml}
       ${sentenceSourceHtml}
       ${noExampleHtml}
-      ${buildTranslationSectionHtml(entry.word)}
     </div>
   `;
 }

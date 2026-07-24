@@ -960,26 +960,23 @@ p {
 
 
 .translation-section {
-  margin-top: 24px;
-  padding: 20px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  background: var(--surface);
-  box-shadow: var(--card-shadow);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .translation-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .translation-title {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: var(--heading);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+  white-space: nowrap;
 }
 
 .translation-dropdown {
@@ -993,7 +990,7 @@ p {
   cursor: pointer;
   outline: none;
   transition: var(--transition);
-  min-width: 160px;
+  min-width: 150px;
 }
 
 .translation-dropdown:focus {
@@ -1002,7 +999,8 @@ p {
 }
 
 .translation-result {
-  margin-top: 14px;
+  margin-top: 10px;
+  width: 100%;
 }
 
 .translation-card {
