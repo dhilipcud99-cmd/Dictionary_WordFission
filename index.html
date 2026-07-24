@@ -17,7 +17,23 @@
         <p>Discover meanings, pronunciation, etymology, and examples for any word</p>
       </div>
       <button id="theme-toggle" class="theme-toggle" aria-label="Toggle light dark mode">🌙 Dark</button>
+      <button id="translate-btn" class="translate-btn" aria-label="Translate word">🌐 Translate</button>
     </header>
+
+    <!-- Translate Modal -->
+    <div class="translate-overlay" id="translate-overlay" aria-hidden="true">
+      <div class="translate-modal" role="dialog" aria-modal="true" aria-label="Translate word">
+        <div class="translate-modal-header">
+          <span>🌐 Translate Word</span>
+          <button class="translate-close" id="translate-close" aria-label="Close">&times;</button>
+        </div>
+        <p class="translate-subtitle" id="translate-subtitle">Select a language to translate</p>
+        <div class="translate-search-box">
+          <input type="text" id="translate-filter" placeholder="Filter languages..." autocomplete="off" />
+        </div>
+        <div class="translate-lang-grid" id="translate-lang-grid"></div>
+      </div>
+    </div>
 
     <main class="content">
       <section class="search-panel">
