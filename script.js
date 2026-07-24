@@ -308,181 +308,15 @@ async function fetchEtymology(word) {
   }
 }
 
-const KNOWN_LANGUAGES = [
-  'Proto-Indo-European', 'Proto-Germanic', 'Proto-West Germanic', 'Middle English', 'Old English', 'Modern English',
-  'Middle French', 'Old French', 'Vulgar Latin', 'Ancient Greek', 'Anglo-Norman', 'Proto-Italic', 'Proto-Celtic',
-  'Old High German', 'Middle High German', 'Middle Dutch', 'Proto-West-Germanic', 'Old Saxon', 'Old Norse', 'Sanskrit',
-  'Germanic', 'English', 'French', 'Latin', 'Greek', 'Norse', 'Irish', 'Welsh', 'Gothic', 'Dutch', 'Spanish', 'Italian'
-];
 
-function parseEtymology(html, word) {
-  if (!html) return [];
-  
-  let cleaned = html.replace(/<em>/g, '<i>').replace(/<\/em>/g, '</i>');
-  cleaned = cleaned.replace(/<a[^>]*>/g, '').replace(/<\/a>/g, '');
-  cleaned = cleaned.replace(/<(?!\/?i\b)[^>]+>/g, '');
-  
-  const nodes = [];
-  const regex = /(?:([A-Za-z\s-]+)\s+)?<i>([^<]+)<\/i>(?:\s*[,;()]*\s*(?:“([^”]+)”|'([^']+)'|"([^"]+)"))?/g;
-  const sortedLangs = [...KNOWN_LANGUAGES].sort((a, b) => b.length - a.length);
-  
-  let match;
-  let lastLanguage = '';
-  
-  while ((match = regex.exec(cleaned)) !== null) {
-    let rawLang = match[1] ? match[1].trim() : '';
-    let nodeWord = match[2] ? match[2].trim() : '';
-    let meaning = match[3] || match[4] || match[5] || '';
-    
-    let language = '';
-    if (rawLang) {
-      const foundLang = sortedLangs.find(lang => rawLang.toLowerCase().includes(lang.toLowerCase()));
-      if (foundLang) {
-        language = foundLang;
-      }
-    }
-    
-    if (language) {
-      lastLanguage = language;
-    } else {
-      language = lastLanguage || 'Origin';
-    }
-    
-    const startIdx = Math.max(0, match.index - 60);
-    const searchArea = cleaned.substring(startIdx, match.index);
-    const dateMatch = searchArea.match(/\b(\d{4}s?|\dth\s*(?:century|c\b|c\.\b))/i);
-    const date = dateMatch ? dateMatch[0] : '';
-    
-    nodeWord = nodeWord.replace(/^\*/, '').trim();
-    
-    if (nodeWord && nodeWord.length > 1 && !/^[.,\/#!$%\^&\*;:{}=\-_`~()]+$/.test(nodeWord)) {
-      if (nodeWord.toLowerCase() !== word.toLowerCase()) {
-        nodes.push({
-          word: nodeWord,
-          language,
-          meaning,
-          date
-        });
-      }
-    }
-  }
-  
-  if (nodes.length === 0) return [];
-  
-  const uniqueNodes = [];
-  for (const node of nodes) {
-    if (!uniqueNodes.length || uniqueNodes[uniqueNodes.length - 1].word.toLowerCase() !== node.word.toLowerCase()) {
-      uniqueNodes.push(node);
-    }
-  }
-  
-  return uniqueNodes.reverse();
-}
 
-function buildEtymologyTimelineHtml(etymologyText, entry, etymologyUrl) {
-  const word = entry.word;
-  const nodes = parseEtymology(etymologyText, word);
-  
-  let originLanguages = 'Historical Germanic / Italic / Indo-European';
-  let rootsListHtml = '<li>Roots and meanings not detailed in database</li>';
-  let meaningEvolutionText = 'Derived from historical roots and adopted into English vocabulary, retaining its semantic focus.';
-  let evolutionPathText = 'Historical development to Modern English';
 
-  if (nodes.length > 0) {
-    const langs = [...new Set(nodes.map(n => n.language))].filter(l => l !== 'Modern English');
-    originLanguages = langs.length ? langs.join(', ') : 'Unknown';
-    
-    rootsListHtml = nodes
-      .filter(n => n.language !== 'Modern English')
-      .map(n => `<li><span class="root-lang">[${n.language}]</span> <em>${n.word}</em> ${n.meaning ? `&ndash; &ldquo;${n.meaning}&rdquo;` : ''}</li>`)
-      .join('');
-      
-    if (nodes.length >= 2) {
-      const firstNode = nodes[0];
-      const lastPrevNode = nodes[nodes.length - 2];
-      meaningEvolutionText = `Originating from the ${firstNode.language} term <em>${firstNode.word}</em>${firstNode.meaning ? ` (&ldquo;${firstNode.meaning}&rdquo;)` : ''}, the word transitioned through various historical forms including ${lastPrevNode.language} <em>${lastPrevNode.word}</em>${lastPrevNode.meaning ? ` (&ldquo;${lastPrevNode.meaning}&rdquo;)` : ''} before taking its modern form in English.`;
-    } else {
-      const singleNode = nodes[0];
-      meaningEvolutionText = `Derived from the ${singleNode.language} term <em>${singleNode.word}</em>${singleNode.meaning ? ` (&ldquo;${singleNode.meaning}&rdquo;)` : ''} and adopted into the English vocabulary.`;
-    }
 
-    const pathParts = nodes.map(n => `${n.language} (<em>${n.word}</em>)`);
-    if (nodes[nodes.length - 1].word.toLowerCase() !== word.toLowerCase()) {
-      pathParts.push(`Modern English (<em>${word}</em>)`);
-    }
-    evolutionPathText = pathParts.join(' &rarr; ');
-  } else {
-    const foundLangs = KNOWN_LANGUAGES.filter(lang => etymologyText.toLowerCase().includes(lang.toLowerCase()));
-    if (foundLangs.length > 0) {
-      originLanguages = foundLangs.slice(0, 3).join(', ');
-    }
-    
-    const rootMatches = etymologyText.match(/<i>([^<]+)<\/i>/g);
-    if (rootMatches && rootMatches.length > 0) {
-      const uniqueRoots = [...new Set(rootMatches.map(r => r.replace(/<[^>]+>/g, '').trim()))];
-      rootsListHtml = uniqueRoots.slice(0, 4).map(root => `<li><em>${root}</em></li>`).join('');
-      evolutionPathText = uniqueRoots.map(r => `<em>${r}</em>`).join(' &rarr; ') + ` &rarr; Modern English (<em>${word}</em>)`;
-    } else {
-      evolutionPathText = `Historical Roots &rarr; Modern English (<em>${word}</em>)`;
-    }
-    
-    meaningEvolutionText = 'Evolved through historical word forms and adopted into English usage.';
-  }
 
-  const presentDayMeaning = entry.meanings?.[0]?.definitions?.[0]?.definition || 'No definition available.';
-  const coreIdeaSummary = entry.meanings?.[0]?.definitions?.[0]?.definition 
-    ? `${shortenText(entry.meanings[0].definitions[0].definition, 110).replace(/\.$/, '')}.`
-    : 'Core idea: reference definition for meanings and usage.';
 
-  const clockIconSvg = `
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent);">
-      <circle cx="12" cy="12" r="10"></circle>
-      <polyline points="12 6 12 12 16 14"></polyline>
-    </svg>
-  `;
-
-  return `
-    <div class="etymology-timeline">
-      <div class="etymology-heading">
-        ${clockIconSvg}
-        <span>Etymology & Word Origin</span>
-      </div>
-      
-      <div class="etymology-details">
-        <div class="etymology-detail-item">
-          <strong>Origin Language(s)</strong>
-          ${originLanguages}
-        </div>
-        <div class="etymology-detail-item">
-          <strong>Root Word(s) & Meanings</strong>
-          <ul>
-            ${rootsListHtml}
-          </ul>
-        </div>
-      </div>
-
-      <div class="etymology-details-bottom">
-        <div class="etymology-detail-item">
-          <strong>Word Evolution Path</strong>
-          <p class="evolution-path-text">${evolutionPathText}</p>
-        </div>
-        <div class="etymology-detail-item">
-          <strong>How Meaning Changed Over Time</strong>
-          <p>${meaningEvolutionText}</p>
-        </div>
-        <div class="etymology-detail-item">
-          <strong>Present-Day Meaning</strong>
-          <p>${presentDayMeaning}</p>
-        </div>
-        <div class="etymology-detail-item core-idea-box">
-          <strong>Core Idea</strong>
-          <p>&ldquo;${coreIdeaSummary}&rdquo;</p>
-        </div>
-      </div>
-      
-      <p class="etymology-source">More details at <a href="${etymologyUrl}" target="_blank" rel="noopener noreferrer">Etymonline</a></p>
-    </div>
-  `;
+function buildEtymologyCardHtml(word, etymologyUrl) {
+  const svg = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent);"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>';
+  return '<div class="etymology-timeline"><div class="etymology-heading">' + svg + '<span>Etymology &amp; Origin</span></div><p class="etymology-source">More details at <a href="' + etymologyUrl + '" target="_blank" rel="noopener noreferrer">Etymonline</a></p></div>';
 }
 
 function shortenText(text, maxLength = 150) {
@@ -547,7 +381,7 @@ async function renderResult(entry) {
       const definitions = meaning.definitions
         .map((definition) => {
           const exampleHtml = definition.example
-            ? `<p class="example">"${definition.example}"</p>`
+            ? `<p class="example">"<strong>${definition.example}</strong>"</p>`
             : '';
           return `<li>${definition.definition}${exampleHtml}</li>`;
         })
@@ -599,9 +433,8 @@ async function renderResult(entry) {
     ? `<p class="word-summary">${summary}</p>`
     : '';
 
-  const etymologyHtml = etymologyText
-    ? buildEtymologyTimelineHtml(etymologyText, entry, etymologyUrl)
-    : '';
+  const etymologyHtml = buildEtymologyCardHtml(entry.word, etymologyUrl);
+
 
   const bookmarks = getBookmarks();
   const isBookmarked = bookmarks.some(w => w.toLowerCase() === entry.word.toLowerCase());
@@ -729,7 +562,7 @@ suggestionsPanel.addEventListener('keydown', (event) => {
   }
 });
 
-outputPanel.addEventListener('click', (event) => {
+outputPanel.addEventListener('click', async (event) => {
   const dailyBtn = event.target.closest('.daily-word-btn');
   if (dailyBtn) {
     const word = dailyBtn.dataset.word;
