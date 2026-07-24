@@ -153,7 +153,30 @@ const FALLBACK_WORDS = [
   "yonder", "zeitgeist", "altruism", "brevity", "charisma", "diligence", "epiphany",
   "finesse", "genesis", "heritage", "idealism", "justice", "kinship", "liberty",
   "momentum", "nuance", "odyssey", "paradigm", "quorum", "resolve", "sanctuary",
-  "tenacity", "unity", "virtue", "warmth", "xenolith", "yield", "zeal"
+  "tenacity", "unity", "virtue", "warmth", "xenolith", "yield", "zeal",
+  "abound", "acclaim", "adept", "affinity", "agile", "allegiance", "allure", "altruistic",
+  "amicable", "aplomb", "ardent", "ardor", "articulate", "aspire", "assiduous", "aura",
+  "authentic", "awe", "axiom", "balance", "benign", "bold", "boundless", "buoyant",
+  "caliber", "calm", "capable", "captivate", "celebrate", "celerity", "cherish", "civil",
+  "cogent", "coherent", "compassion", "competent", "composed", "concise", "confident",
+  "congenial", "conscience", "conscious", "conviction", "cordial", "courage", "courteous",
+  "credible", "crisp", "cultivate", "curious", "decisive", "dedicated", "deliberate",
+  "devoted", "discern", "discipline", "discover", "distinct", "driven", "earnest",
+  "effective", "efficient", "elegant", "elevate", "endure", "energize", "engage",
+  "enlighten", "equanimity", "ethical", "evolve", "exact", "excel", "exemplary",
+  "expansive", "explicit", "expressive", "fair", "faithful", "fearless", "flexible",
+  "focused", "forthright", "frank", "free", "fresh", "fulfil", "genuine", "gifted",
+  "gleam", "global", "grounded", "grow", "guide", "hardy", "heartfelt", "heroic",
+  "hopeful", "illuminate", "imaginative", "immense", "impact", "improve", "incisive",
+  "independent", "industrious", "ingenious", "inspire", "instinct", "inventive",
+  "invincible", "keen", "lead", "learn", "logical", "lucid", "masterful", "mindful",
+  "motivated", "open", "original", "outshine", "overcome", "persevere", "pioneer",
+  "precise", "proactive", "profound", "purposeful", "reliable", "remarkable", "renew",
+  "resourceful", "rise", "robust", "sharp", "sincere", "skilled", "soar", "solid",
+  "sovereign", "spark", "steadfast", "stellar", "strive", "sublime", "succeed", "swift",
+  "tactful", "talented", "thrive", "tireless", "transcend", "trust", "truthful",
+  "unbounded", "undaunted", "upright", "vibrant", "vigilant", "visionary", "vital",
+  "wholesome", "willing", "worthy"
 ];
 
 async function loadWordOfTheDay() {
