@@ -13,6 +13,22 @@ const SENTENCE_DICT_BASE = 'https://sentencedict.com/';
 const THESAURUS_BASE = 'https://www.thesaurus.com/browse/';
 const LONGMAN_BASE = 'https://www.ldoceonline.com/dictionary/';
 const COLLINS_BASE = 'https://www.collinsdictionary.com/dictionary/english/';
+const MYMEMORY_API = 'https://api.mymemory.translated.net/get';
+const translationCache = new Map();
+
+const TRANSLATION_LANGS = [
+  { code: 'ta', name: 'Tamil' },
+  { code: 'hi', name: 'Hindi' },
+  { code: 'te', name: 'Telugu' },
+  { code: 'ml', name: 'Malayalam' },
+  { code: 'kn', name: 'Kannada' },
+  { code: 'fr', name: 'French' },
+  { code: 'de', name: 'German' },
+  { code: 'es', name: 'Spanish' },
+  { code: 'ja', name: 'Japanese' },
+  { code: 'zh-CN', name: 'Chinese' },
+  { code: 'ar', name: 'Arabic' },
+];
 let suggestionIndex = -1;
 let suggestionRequestId = 0;
 
@@ -376,6 +392,43 @@ function buildEtymologyCardHtml(word, etymologyText, entry, etymologyUrl) {
   `;
 }
 
+async function fetchTranslation(text, langCode) {
+  const key = text + '|' + langCode;
+  if (translationCache.has(key)) return translationCache.get(key);
+  try {
+    const url = MYMEMORY_API + '?q=' + encodeURIComponent(text) + '&langpair=en|' + langCode;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Translation failed');
+    const data = await res.json();
+    const result = data?.responseData?.translatedText || '';
+    if (result && result.toLowerCase() !== text.toLowerCase()) {
+      translationCache.set(key, result);
+      return result;
+    }
+    return '';
+  } catch (e) {
+    return '';
+  }
+}
+
+function buildTranslationSectionHtml(word) {
+  const options = TRANSLATION_LANGS.map(l =>
+    '<option value="' + l.code + '">' + l.name + '</option>'
+  ).join('');
+  return `
+    <div class="translation-section" id="translation-section-${word}">
+      <div class="translation-header">
+        <span class="translation-title">🌐 Translations</span>
+        <select class="translation-dropdown" id="translation-dropdown-${word}" data-word="${word}">
+          <option value="">Select language</option>
+          ${options}
+        </select>
+      </div>
+      <div class="translation-result" id="translation-result-${word}"></div>
+    </div>
+  `;
+}
+
 function shortenText(text, maxLength = 150) {
   if (!text) return '';
   const trimmed = text.trim();
@@ -529,6 +582,7 @@ async function renderResult(entry) {
       ${fallbackHtml}
       ${sentenceSourceHtml}
       ${noExampleHtml}
+      ${buildTranslationSectionHtml(entry.word)}
     </div>
   `;
 }
@@ -614,6 +668,44 @@ suggestionsPanel.addEventListener('keydown', (event) => {
     clearSuggestions();
     lookupWord(value);
   }
+});
+
+outputPanel.addEventListener('change', async (event) => {
+  const dropdown = event.target.closest('.translation-dropdown');
+  if (!dropdown) return;
+  const word = dropdown.dataset.word;
+  const langCode = dropdown.value;
+  const resultEl = document.getElementById('translation-result-' + word);
+  if (!langCode || !resultEl) return;
+
+  const langName = TRANSLATION_LANGS.find(l => l.code === langCode)?.name || langCode;
+  const definition = resultEl.closest('.definition-card')
+    ?.querySelector('.meaning-list li')?.textContent?.trim() || '';
+
+  resultEl.innerHTML = '<span class="translation-loading">Translating...</span>';
+
+  const [wordTranslation, defTranslation] = await Promise.all([
+    fetchTranslation(word, langCode),
+    definition ? fetchTranslation(definition.slice(0, 200), langCode) : Promise.resolve('')
+  ]);
+
+  if (!wordTranslation) {
+    resultEl.innerHTML = '<span class="translation-error">Translation not available for this language.</span>';
+    return;
+  }
+
+  resultEl.innerHTML = `
+    <div class="translation-card">
+      <div class="translation-row">
+        <span class="translation-label">Word in ${langName}</span>
+        <span class="translation-value">${wordTranslation}</span>
+      </div>
+      ${defTranslation ? `<div class="translation-row">
+        <span class="translation-label">Definition in ${langName}</span>
+        <span class="translation-value translation-def">${defTranslation}</span>
+      </div>` : ''}
+    </div>
+  `;
 });
 
 outputPanel.addEventListener('click', async (event) => {
