@@ -126,10 +126,10 @@ h1 {
 
 .brand-tick {
   color: #22c55e;
-  font-size: 0.75em;
+  font-size: 1.5em;
   vertical-align: middle;
   font-weight: 900;
-  -webkit-text-stroke: 0.5px #22c55e;
+  -webkit-text-stroke: 1px #22c55e;
 }
 
 p {
