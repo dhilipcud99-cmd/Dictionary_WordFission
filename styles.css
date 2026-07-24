@@ -336,6 +336,7 @@ p {
   padding: 28px;
   background: var(--surface-strong);
   border: 1px solid var(--border);
+  min-width: 0;
 }
 
 .output-empty {
@@ -357,6 +358,10 @@ p {
   align-items: baseline;
 }
 
+.definition-header > div:first-child {
+  min-width: 0;
+}
+
 .word-summary {
   margin: 10px 0 0;
   color: var(--muted);
@@ -369,42 +374,155 @@ p {
   max-width: 720px;
 }
 
-.etymology-section {
+.etymology-timeline {
   margin: 16px 0 0;
-  padding: 18px 20px;
+  padding: 22px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.01);
+  min-width: 0;
+  max-width: 100%;
 }
 
 .etymology-heading {
-  margin: 0 0 12px;
+  margin: 0 0 16px;
   font-size: 1rem;
   font-weight: 700;
   color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.etymology-section p,
-.etymology-section ul,
-.etymology-section li {
+.timeline-track {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  overflow-x: auto;
+  padding: 16px 4px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Custom scrollbar for webkit browsers */
+.timeline-track::-webkit-scrollbar {
+  height: 6px;
+}
+.timeline-track::-webkit-scrollbar-thumb {
+  background-color: var(--border);
+  border-radius: 999px;
+}
+.timeline-track::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+.timeline-node {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-strong);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px 20px;
+  min-width: 160px;
+  max-width: 240px;
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.02);
+}
+
+.timeline-node:hover {
+  transform: translateY(-5px);
+  border-color: var(--accent);
+  box-shadow: 0 10px 24px rgba(59, 130, 246, 0.12);
+}
+
+.timeline-node::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--border);
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  transition: background 0.3s ease;
+}
+
+.timeline-node:hover::before {
+  background: var(--accent);
+}
+
+.node-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--muted);
+  margin-bottom: 8px;
+  transition: color 0.3s ease;
+}
+
+.timeline-node:hover .node-badge {
+  color: var(--accent);
+}
+
+.node-word {
+  margin: 0 0 6px;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.node-meaning {
   margin: 0;
+  font-size: 0.88rem;
   color: var(--muted-strong);
-  line-height: 1.7;
+  line-height: 1.4;
+  font-style: italic;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-.etymology-section ul {
-  margin: 12px 0 0;
-  padding-left: 22px;
+.node-date {
+  margin-top: 10px;
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-weight: 600;
 }
 
-.etymology-section li {
-  margin-bottom: 0.8rem;
+.timeline-connector {
+  flex: 0 0 auto;
+  color: var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+}
+
+.timeline-connector svg {
+  width: 22px;
+  height: 22px;
+  stroke: currentColor;
+  stroke-width: 3;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .etymology-source {
   margin-top: 16px;
   color: var(--muted);
-  font-size: 0.95rem;
+  font-size: 0.92rem;
 }
 
 .etymology-source a {
@@ -649,8 +767,11 @@ p {
 /* Animations */
 .definition-card {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 22px;
   animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  min-width: 0;
+  max-width: 100%;
 }
 
 @keyframes slideUp {
