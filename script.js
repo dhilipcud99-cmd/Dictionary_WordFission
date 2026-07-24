@@ -139,7 +139,21 @@ const FALLBACK_WORDS = [
   "vibrant", "wisdom", "xenon", "yesterday", "zenith", "adventure", "bravery", "clarity",
   "dignity", "empathy", "flourish", "gratitude", "honesty", "insight", "jubilant",
   "kindness", "loyalty", "modesty", "nurture", "originate", "patience", "respect",
-  "strength", "triumph", "understanding", "valiant", "wonder", "youthful", "zeal"
+  "strength", "triumph", "understanding", "valiant", "wonder", "youthful", "zeal",
+  "ambition", "benevolent", "candid", "dauntless", "effervescent", "fidelity", "gallant",
+  "humility", "illustrious", "judicious", "keen", "loquacious", "meticulous", "nimble",
+  "opulent", "prudent", "quaint", "radiant", "sagacious", "tenacious", "unwavering",
+  "versatile", "whimsical", "exuberant", "yearning", "zealous", "astute", "bliss",
+  "candor", "dexterity", "enigma", "fervent", "grace", "haven", "integrity", "jovial",
+  "kinetic", "legacy", "mirth", "noble", "omen", "poise", "quest", "reverie", "serene",
+  "tranquil", "utopia", "valor", "whimsy", "xenial", "yearn", "zephyr", "acumen",
+  "beacon", "catalyst", "daring", "ethereal", "fortitude", "grit", "hallmark", "iconic",
+  "jubilee", "karma", "luster", "marvel", "nexus", "oracle", "pinnacle", "quintessence",
+  "renaissance", "solace", "tapestry", "umbra", "vivid", "wanderlust", "xenophile",
+  "yonder", "zeitgeist", "altruism", "brevity", "charisma", "diligence", "epiphany",
+  "finesse", "genesis", "heritage", "idealism", "justice", "kinship", "liberty",
+  "momentum", "nuance", "odyssey", "paradigm", "quorum", "resolve", "sanctuary",
+  "tenacity", "unity", "virtue", "warmth", "xenolith", "yield", "zeal"
 ];
 
 async function loadWordOfTheDay() {
