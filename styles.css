@@ -462,10 +462,10 @@ p {
 .etymology-card {
   margin: 16px 0 0;
   padding: 22px;
-  background: var(--input-bg);
-  border: 1px solid var(--border);
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
   border-radius: var(--radius-lg);
-  box-shadow: none;
+  box-shadow: 0 2px 12px rgba(30, 58, 138, 0.06);
   display: grid;
   gap: 18px;
 }
@@ -473,11 +473,16 @@ p {
 .etym-heading {
   font-size: 1rem;
   font-weight: 700;
-  color: var(--heading);
+  color: #1E293B;
   display: flex;
   align-items: center;
   gap: 8px;
   margin: 0;
+}
+
+.etym-heading svg {
+  color: #1E3A8A;
+  stroke: #1E3A8A;
 }
 
 .etym-top-grid {
@@ -487,8 +492,8 @@ p {
 }
 
 .etym-box {
-  background: var(--input-bg);
-  border: 1px solid var(--border);
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
   border-radius: var(--radius-md);
   padding: 14px 16px;
 }
@@ -499,7 +504,7 @@ p {
   font-weight: 700;
   letter-spacing: 1px;
   text-transform: uppercase;
-  color: #64748B;
+  color: #1E40AF;
   margin-bottom: 8px;
 }
 
@@ -531,12 +536,15 @@ p {
 .etym-lang-badge {
   font-size: 0.72rem;
   font-weight: 700;
-  color: var(--muted);
+  color: #1E3A8A;
   white-space: nowrap;
+  background: rgba(30, 58, 138, 0.08);
+  padding: 1px 6px;
+  border-radius: 4px;
 }
 
 .etym-no-data {
-  color: var(--muted);
+  color: #64748B;
   font-style: italic;
 }
 
@@ -557,15 +565,15 @@ p {
   font-size: 0.93rem;
   color: var(--text);
   line-height: 1.7;
-  background: var(--input-bg);
-  border: 1px solid var(--border);
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
   border-radius: var(--radius-sm);
   padding: 10px 14px;
 }
 
 .etym-core-idea {
-  background: linear-gradient(135deg, rgba(124,45,18,0.06) 0%, rgba(124,45,18,0.02) 100%);
-  border: 1px solid rgba(124,45,18,0.15);
+  background: linear-gradient(135deg, rgba(30, 58, 138, 0.07) 0%, rgba(30, 64, 175, 0.03) 100%);
+  border: 1px solid rgba(30, 58, 138, 0.15);
   border-radius: var(--radius-md);
   padding: 14px 18px;
   display: grid;
@@ -582,17 +590,19 @@ p {
 
 .etymology-source {
   margin: 0;
-  color: var(--muted);
+  color: #64748B;
   font-size: 0.88rem;
 }
 
 .etymology-source a {
-  color: var(--accent);
+  color: #1E40AF;
   text-decoration: none;
+  font-weight: 600;
 }
 
 .etymology-source a:hover {
   text-decoration: underline;
+  color: #1E3A8A;
 }
 
 @media (max-width: 600px) {
