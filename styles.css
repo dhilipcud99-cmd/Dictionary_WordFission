@@ -459,13 +459,16 @@ p {
   max-width: 720px;
 }
 
+/* ==============================
+   ETYMOLOGY & WORD ORIGIN CARD
+   ============================== */
 .etymology-card {
   margin: 16px 0 0;
   padding: 22px;
-  background: #FFFFFF;
-  border: 1px solid #E5E7EB;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--card-shadow);
   display: grid;
   gap: 18px;
 }
@@ -473,7 +476,7 @@ p {
 .etym-heading {
   font-size: 1rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--heading);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -481,8 +484,8 @@ p {
 }
 
 .etym-heading svg {
-  color: #111827;
-  stroke: #111827;
+  color: var(--heading);
+  stroke: var(--heading);
 }
 
 .etym-top-grid {
@@ -492,8 +495,8 @@ p {
 }
 
 .etym-box {
-  background: #F9FAFB;
-  border: 1px solid #E5E7EB;
+  background: var(--input-bg);
+  border: 1px solid var(--border);
   border-radius: var(--radius-md);
   padding: 14px 16px;
 }
@@ -504,7 +507,7 @@ p {
   font-weight: 700;
   letter-spacing: 1px;
   text-transform: uppercase;
-  color: #111827;
+  color: var(--heading);
   margin-bottom: 8px;
 }
 
@@ -536,15 +539,15 @@ p {
 .etym-lang-badge {
   font-size: 0.72rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--heading);
   white-space: nowrap;
-  background: #F3F4F6;
+  background: var(--border);
   padding: 1px 6px;
   border-radius: 4px;
 }
 
 .etym-no-data {
-  color: #6B7280;
+  color: var(--muted);
   font-style: italic;
 }
 
@@ -565,15 +568,15 @@ p {
   font-size: 0.93rem;
   color: var(--text);
   line-height: 1.7;
-  background: #F9FAFB;
-  border: 1px solid #E5E7EB;
+  background: var(--input-bg);
+  border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 10px 14px;
 }
 
 .etym-core-idea {
-  background: linear-gradient(135deg, rgba(17, 24, 39, 0.04) 0%, rgba(55, 65, 81, 0.02) 100%);
-  border: 1px solid rgba(17, 24, 39, 0.1);
+  background: var(--input-bg);
+  border: 1px solid var(--border);
   border-radius: var(--radius-md);
   padding: 14px 18px;
   display: grid;
@@ -590,19 +593,19 @@ p {
 
 .etymology-source {
   margin: 0;
-  color: #6B7280;
+  color: var(--muted);
   font-size: 0.88rem;
 }
 
 .etymology-source a {
-  color: #111827;
+  color: var(--heading);
   text-decoration: none;
   font-weight: 600;
 }
 
 .etymology-source a:hover {
   text-decoration: underline;
-  color: #111827;
+  color: var(--accent);
 }
 
 @media (max-width: 600px) {
@@ -611,8 +614,9 @@ p {
   }
 }
 
-
-
+/* ==============================
+   SENTENCE SOURCE LINKS
+   ============================== */
 .sentence-source {
   margin-top: 18px;
   color: var(--text);
