@@ -640,16 +640,41 @@ async function fetchAlternateExamples(word) {
       throw new Error('Alternate example fetch failed');
     }
     const payload = await response.json();
-    const examples = (payload.list || [])
+    const raw = (payload.list || [])
       .map((item) => item.example)
-      .filter(Boolean)
-      .map((text) => text.replace(/\r\n|\r/g, '\n').trim())
       .filter(Boolean);
-    return [...new Set(examples)].slice(0, 12);
+    const examples = raw
+      .map((text) => cleanExampleText(text))
+      .filter(Boolean)
+      .filter((text) => !isOffensive(text))
+      .filter((text) => isValidExample(text, word))
+      .map((text) => text.replace(/\r\n|\r/g, '\n').trim());
+    return [...new Set(examples)].slice(0, 8);
   } catch (error) {
     console.warn(error);
     return [];
   }
+}
+
+const OFFENSIVE_PATTERNS = /\b(fuck|shit|bitch|dick|cock|piss|slut|whore|bastard|damn|crap|asshole|motherfuck|nigger|nigga|porn|sex\s*(?:tape|toys?|shop)|xxx)\b/i;
+
+function cleanExampleText(text) {
+  if (!text) return '';
+  let cleaned = text.replace(/\[([^\]]*)\]/g, '').trim();
+  cleaned = cleaned.replace(/\s+/g, ' ').trim();
+  cleaned = cleaned.replace(/^[\s,;:.!?\-]+|[\s,;:.!?\-]+$/g, '').trim();
+  return cleaned;
+}
+
+function isOffensive(text) {
+  return OFFENSIVE_PATTERNS.test(text);
+}
+
+function isValidExample(text, word) {
+  if (!text || text.length < 15 || text.length > 500) return false;
+  if (!text.toLowerCase().includes(word.toLowerCase())) return false;
+  if (!/^[A-Z"']/.test(text.trim())) return false;
+  return true;
 }
 
 function sanitizeEtymologyHtml(html) {
