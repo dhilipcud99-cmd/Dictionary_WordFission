@@ -14,6 +14,7 @@ const THESAURUS_BASE = 'https://www.thesaurus.com/browse/';
 const LONGMAN_BASE = 'https://www.ldoceonline.com/dictionary/';
 const COLLINS_BASE = 'https://www.collinsdictionary.com/dictionary/english/';
 const MYMEMORY_API = 'https://api.mymemory.translated.net/get';
+const GOOGLE_TRANSLATE_API = 'https://translate.googleapis.com/translate_a/single';
 const translationCache = new Map();
 
 const TRANSLATION_LANGS = [
@@ -944,26 +945,61 @@ function enqueueTx(priority, fn) {
   });
 }
 
-async function fetchTranslation(text, langCode, priority = 0) {
+async function fetchTranslationGoogle(text, langCode) {
   const sanitized = text.trim().replace(/\s+/g, ' ');
-  if (!sanitized) return null;
-  const key = sanitized + '|' + langCode;
-  if (translationCache.has(key)) return translationCache.get(key);
-  if (translationInflight.has(key)) return translationInflight.get(key);
-
-  const promise = enqueueTx(priority, async () => {
-    const url = MYMEMORY_API + '?q=' + encodeURIComponent(sanitized) + '&langpair=en|' + langCode;
+  if (!sanitized || langCode === 'en') return null;
+  try {
+    const url = `${GOOGLE_TRANSLATE_API}?client=gtx&sl=en&tl=${langCode}&dt=t&q=${encodeURIComponent(sanitized)}`;
     const res = await fetch(url);
     if (!res.ok) return null;
     const data = await res.json();
-    const result = (data?.responseData?.translatedText || '').trim();
-    if (isValidTranslation(result, sanitized)) {
+    const translated = (data?.[0] || []).map(part => part?.[0] || '').join('').trim();
+    if (translated && translated.toLowerCase() !== sanitized.toLowerCase()) {
+      return translated;
+    }
+    return null;
+  } catch (e) {
+    console.warn('Google Translate failed:', e);
+    return null;
+  }
+}
+
+async function fetchTranslation(text, langCode, priority = 0) {
+  const sanitized = text.trim().replace(/\s+/g, ' ');
+  if (!sanitized || langCode === 'en') return null;
+  const key = sanitized + '|' + langCode;
+
+  // Check cache first
+  if (translationCache.has(key)) return translationCache.get(key);
+  if (translationInflight.has(key)) return translationInflight.get(key);
+
+  // Try Google Translate first (works on GitHub Pages), then MyMemory as fallback
+  const promise = (async () => {
+    // Google Translate
+    let result = await fetchTranslationGoogle(sanitized, langCode);
+    if (result) {
       translationCache.set(key, result);
       persistTranslationCache();
       return result;
     }
+    // MyMemory fallback
+    try {
+      const url = MYMEMORY_API + '?q=' + encodeURIComponent(sanitized) + '&langpair=en|' + langCode;
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = await res.json();
+        const memResult = (data?.responseData?.translatedText || '').trim();
+        if (isValidTranslation(memResult, sanitized)) {
+          translationCache.set(key, memResult);
+          persistTranslationCache();
+          return memResult;
+        }
+      }
+    } catch (e) {
+      console.warn('MyMemory fallback failed:', e);
+    }
     return null;
-  }).catch(() => null).finally(() => {
+  })().finally(() => {
     translationInflight.delete(key);
   });
 
@@ -986,12 +1022,31 @@ function resolveTranslationPill(pill, text, cls) {
   }
 }
 
+function getPreTranslation(text, langCode) {
+  // Check PRE_TRANSLATED_UI first (instant, no API call needed)
+  if (PRE_TRANSLATED_UI[langCode] && PRE_TRANSLATED_UI[langCode][text]) {
+    return PRE_TRANSLATED_UI[langCode][text];
+  }
+  // Check translationCache
+  const key = text + '|' + langCode;
+  if (translationCache.has(key)) return translationCache.get(key);
+  return null;
+}
+
 async function translateUIElements(langCode, langName, root) {
   const scope = root || document;
 
   if (langCode === 'en') {
     scope.querySelectorAll('[data-translate]').forEach(el => {
+      // Remove all inline-translation pills
       el.querySelectorAll(':scope > .inline-translation').forEach(p => p.remove());
+      // Restore original text by removing any direct text override from previous translations
+      const key = el.dataset.translate;
+      if (key && UI_STRINGS[key]) {
+        // Get the text nodes only (skip child elements like pills)
+        const textNodes = Array.from(el.childNodes).filter(n => n.nodeType === Node.TEXT_NODE);
+        // If we had replaced text, restore it via innerHTML trick - just remove pills
+      }
     });
     if (!root) {
       document.querySelectorAll('[data-translate-placeholder]').forEach(el => {
@@ -1007,40 +1062,68 @@ async function translateUIElements(langCode, langName, root) {
     return;
   }
 
+  // Process all [data-translate] elements
+  const promises = [];
   scope.querySelectorAll('[data-translate]').forEach(el => {
-    // Button label is managed separately
     if (el.id === 'translate-btn' || el.id === 'theme-toggle') return;
 
     const key = el.dataset.translate;
     const originalText = UI_STRINGS[key];
     if (!originalText) return;
 
+    // Remove existing pills
     el.querySelectorAll(':scope > .inline-translation').forEach(p => p.remove());
 
+    // Check pre-translated first
+    const preTranslated = getPreTranslation(originalText, langCode);
+    if (preTranslated) {
+      // Apply immediately without skeleton pill or API call
+      const pill = document.createElement('span');
+      pill.className = 'inline-translation ui-translation';
+      pill.textContent = preTranslated;
+      pill.style.display = 'inline';
+      pill.style.marginLeft = '6px';
+      el.appendChild(pill);
+      return;
+    }
+
+    // Fall back to API translation
     const pill = makeTranslationPill('ui-translation');
     pill.style.display = 'inline';
     pill.style.marginLeft = '6px';
     el.appendChild(pill);
 
-    fetchTranslation(originalText, langCode).then(translated => {
-      if (translated) {
-        resolveTranslationPill(pill, translated, 'ui-translation');
-        pill.style.display = 'inline';
-        pill.style.marginLeft = '6px';
-      } else {
-        pill.remove();
-      }
-    });
+    promises.push(
+      fetchTranslation(originalText, langCode).then(translated => {
+        if (translated) {
+          resolveTranslationPill(pill, translated, 'ui-translation');
+          pill.style.display = 'inline';
+          pill.style.marginLeft = '6px';
+        } else {
+          pill.remove();
+        }
+      })
+    );
   });
 
+  // Process placeholders
   if (!root) {
     document.querySelectorAll('[data-translate-placeholder]').forEach(el => {
       const key = el.dataset.translatePlaceholder;
       const originalText = UI_STRINGS[key];
       if (!originalText) return;
-      fetchTranslation(originalText, langCode).then(translated => {
-        if (translated) el.placeholder = translated;
-      });
+
+      const preTranslated = getPreTranslation(originalText, langCode);
+      if (preTranslated) {
+        el.placeholder = preTranslated;
+        return;
+      }
+
+      promises.push(
+        fetchTranslation(originalText, langCode).then(translated => {
+          if (translated) el.placeholder = translated;
+        })
+      );
     });
   }
 
@@ -1051,6 +1134,8 @@ async function translateUIElements(langCode, langName, root) {
 
   translateBtn.dataset.activeLang = langName || '';
   translateBtn.dataset.activeLangCode = langCode;
+
+  await Promise.allSettled(promises);
 }
 
 async function applyInlineTranslations(langCode, langName) {
