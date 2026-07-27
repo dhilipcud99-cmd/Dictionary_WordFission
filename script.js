@@ -8,7 +8,7 @@ const favoritesList = document.getElementById('favorites-list');
 
 const API_BASE = 'https://api.dictionaryapi.dev/api/v2/entries/en';
 const AUTOCOMPLETE_API = 'https://api.datamuse.com/sug';
-const ALT_EXAMPLE_API = 'https://api.urbandictionary.com/v0/define?term=';
+// ALT_EXAMPLE_API removed - see examples.js for the new system
 const SENTENCE_DICT_BASE = 'https://sentencedict.com/';
 const THESAURUS_BASE = 'https://www.thesaurus.com/browse/';
 const LONGMAN_BASE = 'https://www.ldoceonline.com/dictionary/';
@@ -633,49 +633,7 @@ function setTheme(theme) {
   localStorage.setItem('wordfission-theme', theme);
 }
 
-async function fetchAlternateExamples(word) {
-  try {
-    const response = await fetch(`${ALT_EXAMPLE_API}${encodeURIComponent(word)}`);
-    if (!response.ok) {
-      throw new Error('Alternate example fetch failed');
-    }
-    const payload = await response.json();
-    const raw = (payload.list || [])
-      .map((item) => item.example)
-      .filter(Boolean);
-    const examples = raw
-      .map((text) => cleanExampleText(text))
-      .filter(Boolean)
-      .filter((text) => !isOffensive(text))
-      .filter((text) => isValidExample(text, word))
-      .map((text) => text.replace(/\r\n|\r/g, '\n').trim());
-    return [...new Set(examples)].slice(0, 8);
-  } catch (error) {
-    console.warn(error);
-    return [];
-  }
-}
-
-const OFFENSIVE_PATTERNS = /\b(fuck|shit|bitch|dick|cock|piss|slut|whore|bastard|damn|crap|asshole|motherfuck|nigger|nigga|porn|sex\s*(?:tape|toys?|shop)|xxx)\b/i;
-
-function cleanExampleText(text) {
-  if (!text) return '';
-  let cleaned = text.replace(/\[([^\]]*)\]/g, '').trim();
-  cleaned = cleaned.replace(/\s+/g, ' ').trim();
-  cleaned = cleaned.replace(/^[\s,;:.!?\-]+|[\s,;:.!?\-]+$/g, '').trim();
-  return cleaned;
-}
-
-function isOffensive(text) {
-  return OFFENSIVE_PATTERNS.test(text);
-}
-
-function isValidExample(text, word) {
-  if (!text || text.length < 15 || text.length > 500) return false;
-  if (!text.toLowerCase().includes(word.toLowerCase())) return false;
-  if (!/^[A-Z"']/.test(text.trim())) return false;
-  return true;
-}
+// OLD Urban Dictionary code removed - replaced by examples.js (HIGH-QUALITY EXAMPLE SENTENCE SYSTEM)
 
 function sanitizeEtymologyHtml(html) {
   const parser = new DOMParser();
@@ -1342,7 +1300,7 @@ async function renderResult(entry) {
   const wordExamples = entry.meanings.flatMap((meaning) =>
     meaning.definitions.map((definition) => definition.example).filter(Boolean)
   );
-  const fallbackExamples = await fetchAlternateExamples(entry.word);
+  const fallbackExamples = await fetchHighQualityExamples(entry.word, entry);
   const etymologyText = await fetchEtymology(entry.word);
   const etymologyUrl = `https://www.etymonline.com/word/${encodeURIComponent(entry.word)}`;
   const sentenceDictUrl = `${SENTENCE_DICT_BASE}${encodeURIComponent(entry.word)}.html`;
