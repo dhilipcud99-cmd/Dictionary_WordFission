@@ -861,31 +861,31 @@ function buildEtymologyCardHtml(word, etymologyText, entry, etymologyUrl) {
       <div class="etym-heading">${clockSvg}<span data-translate="etymology-heading">Etymology & Word Origin</span></div>
       <div class="etym-top-grid">
         <div class="etym-box">
-          <div class="etym-box-label" data-translate="origin-langs-label">ORIGIN LANGUAGE(S)</div>
+          <div class="etym-box-label" data-translate="origin-langs-label">🌍 ORIGIN LANGUAGE(S)</div>
           <p class="etym-origin-langs">${originLanguages}</p>
         </div>
         <div class="etym-box">
-          <div class="etym-box-label" data-translate="roots-label">ROOT WORD(S) & MEANINGS</div>
+          <div class="etym-box-label" data-translate="roots-label">🌱 ROOT WORD(S) & MEANINGS</div>
           <ul class="etym-roots-list">${rootsListHtml}</ul>
         </div>
       </div>
       <div class="etym-section">
-        <div class="etym-section-label" data-translate="evolution-label">WORD EVOLUTION PATH</div>
+        <div class="etym-section-label" data-translate="evolution-label">🔄 WORD EVOLUTION PATH</div>
         <p class="etym-evolution-path">${evolutionPathText}</p>
       </div>
       <div class="etym-section">
-        <div class="etym-section-label" data-translate="meaning-changed-label">HOW MEANING CHANGED OVER TIME</div>
+        <div class="etym-section-label" data-translate="meaning-changed-label">📖 HOW MEANING CHANGED OVER TIME</div>
         <p data-translate-etym="${meaningEvoAttr}">${meaningEvolutionText}</p>
       </div>
       <div class="etym-section">
-        <div class="etym-section-label" data-translate="present-meaning-label">PRESENT-DAY MEANING</div>
+        <div class="etym-section-label" data-translate="present-meaning-label">📌 PRESENT-DAY MEANING</div>
         <p data-translate-etym="${presentDayAttr}">${presentDayMeaning}</p>
       </div>
       <div class="etym-core-idea">
-        <div class="etym-section-label" data-translate="core-idea-label">CORE IDEA</div>
+        <div class="etym-section-label" data-translate="core-idea-label">💡 CORE IDEA</div>
         <p data-translate-etym="${coreIdeaAttr}">&ldquo;<strong>${coreIdea}</strong>&rdquo;</p>
       </div>
-      <p class="etymology-source"><span data-translate="more-details">More details at</span> <a href="${etymologyUrl}" target="_blank" rel="noopener noreferrer"><span data-translate="etymonline">Etymonline</span></a></p>
+      <p class="etymology-source"><span data-translate="more-details">More details at</span> <a href="${etymologyUrl}" target="_blank" rel="noopener noreferrer"><span data-translate="etymonline">📚 Etymonline</span></a></p>
     </div>
   `;
 }
