@@ -645,7 +645,7 @@ async function fetchAlternateExamples(word) {
       .filter(Boolean)
       .map((text) => text.replace(/\r\n|\r/g, '\n').trim())
       .filter(Boolean);
-    return [...new Set(examples)].slice(0, 3);
+    return [...new Set(examples)].slice(0, 12);
   } catch (error) {
     console.warn(error);
     return [];
@@ -1317,7 +1317,7 @@ async function renderResult(entry) {
   const wordExamples = entry.meanings.flatMap((meaning) =>
     meaning.definitions.map((definition) => definition.example).filter(Boolean)
   );
-  const fallbackExamples = wordExamples.length ? [] : await fetchAlternateExamples(entry.word);
+  const fallbackExamples = await fetchAlternateExamples(entry.word);
   const etymologyText = await fetchEtymology(entry.word);
   const etymologyUrl = `https://www.etymonline.com/word/${encodeURIComponent(entry.word)}`;
   const sentenceDictUrl = `${SENTENCE_DICT_BASE}${encodeURIComponent(entry.word)}.html`;
@@ -1354,9 +1354,9 @@ async function renderResult(entry) {
     })
     .join('');
 
-  const fallbackHtml = !wordExamples.length && fallbackExamples.length
+  const fallbackHtml = fallbackExamples.length
     ? `<div class="fallback-examples">
-         <h3>Example sentences from another source</h3>
+         <h3 data-translate="example-sentences">Example sentences from another source</h3>
          <ul>${fallbackExamples.map((example) => `<li>${example}</li>`).join('')}</ul>
        </div>`
     : '';
