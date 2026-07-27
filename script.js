@@ -17,6 +17,7 @@ const MYMEMORY_API = 'https://api.mymemory.translated.net/get';
 const translationCache = new Map();
 
 const TRANSLATION_LANGS = [
+  { code: 'en', name: 'English (Original)' },
   { code: 'ta', name: 'Tamil' },
   { code: 'hi', name: 'Hindi' },
   { code: 'te', name: 'Telugu' },
@@ -29,6 +30,51 @@ const TRANSLATION_LANGS = [
   { code: 'zh-CN', name: 'Chinese' },
   { code: 'ar', name: 'Arabic' },
 ];
+
+// UI Strings translation map
+const UI_STRINGS = {
+  'tagline': 'Discover meanings, pronunciation, etymology, and examples for any word',
+  'theme-dark': '🌙 Dark',
+  'theme-light': '☀️ Light',
+  'translate-btn': '🌐 Translate ▼',
+  'filter-langs': 'Filter languages...',
+  'search-label': 'Search for any word',
+  'search-placeholder': 'Search for any word...',
+  'search-btn': 'Search',
+  'recent-title': 'Recent Searches',
+  'no-recent': 'No recent searches',
+  'favorites-title': 'Bookmarked Words',
+  'no-favorites': 'No bookmarked words',
+  'footer-text': '© 2025 WordFission. Enhance your vocabulary every day.',
+  'loading': 'Loading definition...',
+  'not-found': 'Unable to find',
+  'try-another': 'Try another word.',
+  'no-definitions': 'No definitions available for',
+  'etymology-heading': 'Etymology & Word Origin',
+  'origin-langs-label': 'ORIGIN LANGUAGE(S)',
+  'roots-label': 'ROOT WORD(S) & MEANINGS',
+  'roots-not-available': 'Roots and meanings not detailed in database',
+  'evolution-label': 'WORD EVOLUTION PATH',
+  'meaning-changed-label': 'HOW MEANING CHANGED OVER TIME',
+  'present-meaning-label': 'PRESENT-DAY MEANING',
+  'core-idea-label': 'CORE IDEA',
+  'core-idea-default': 'Core idea: reference definition for meanings and usage.',
+  'more-details': 'More details at',
+  'etymonline': 'Etymonline',
+  'synonyms': 'Synonyms:',
+  'antonyms': 'Antonyms:',
+  'example-sentences': 'Example sentences from another source',
+  'no-example': 'No sentence example available for this word.',
+  'more-sentences': 'More sentence examples on',
+  'sentence-dict': 'SentenceDict',
+  'thesaurus': 'Thesaurus.com',
+  'longman': 'Longman Dictionary',
+  'collins': 'Collins Dictionary',
+  'more-words': 'More words',
+  'bookmark-label': 'Bookmark word',
+  'play-pronunciation': 'Play pronunciation',
+  'remove-bookmark-label': 'Remove bookmark',
+};
 let suggestionIndex = -1;
 let suggestionRequestId = 0;
 let currentEntry = null;
@@ -98,7 +144,11 @@ function saveRecentSearch(word) {
 function renderRecentSearches() {
   const recents = getRecentSearches();
   if (recents.length === 0) {
-    recentList.innerHTML = '<p class="sidebar-empty">No recent searches</p>';
+    recentList.innerHTML = '<p class="sidebar-empty" data-translate="no-recent">No recent searches</p>';
+    const btn = document.getElementById('translate-btn');
+    if (btn && btn.dataset.activeLang && btn.dataset.activeLangCode) {
+      translateUIElements(btn.dataset.activeLangCode, btn.dataset.activeLang, recentList);
+    }
     return;
   }
   recentList.innerHTML = recents
@@ -136,7 +186,11 @@ function toggleBookmark(word) {
 function renderBookmarks() {
   const bookmarks = getBookmarks();
   if (bookmarks.length === 0) {
-    favoritesList.innerHTML = '<p class="sidebar-empty">No bookmarked words</p>';
+    favoritesList.innerHTML = '<p class="sidebar-empty" data-translate="no-favorites">No bookmarked words</p>';
+    const btn = document.getElementById('translate-btn');
+    if (btn && btn.dataset.activeLang && btn.dataset.activeLangCode) {
+      translateUIElements(btn.dataset.activeLangCode, btn.dataset.activeLang, favoritesList);
+    }
     return;
   }
   favoritesList.innerHTML = bookmarks
@@ -357,38 +411,45 @@ function buildEtymologyCardHtml(word, etymologyText, entry, etymologyUrl) {
     ? shortenText(entry.meanings[0].definitions[0].definition, 120).replace(/\.$/, '') + '.'
     : 'Core idea: reference definition for meanings and usage.';
 
+  const stripTags = (html) => html.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+
+  const meaningEvolutionPlain = stripTags(meaningEvolutionText);
+  const presentDayAttr = escAttr(presentDayMeaning.slice(0, 220));
+  const coreIdeaAttr = escAttr(coreIdea.slice(0, 220));
+  const meaningEvoAttr = escAttr(meaningEvolutionPlain.slice(0, 220));
+
   const clockSvg = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>';
 
   return `
     <div class="etymology-card">
-      <div class="etym-heading">${clockSvg}<span>Etymology &amp; Word Origin</span></div>
+      <div class="etym-heading">${clockSvg}<span data-translate="etymology-heading">Etymology & Word Origin</span></div>
       <div class="etym-top-grid">
         <div class="etym-box">
-          <div class="etym-box-label">ORIGIN LANGUAGE(S)</div>
+          <div class="etym-box-label" data-translate="origin-langs-label">ORIGIN LANGUAGE(S)</div>
           <p class="etym-origin-langs">${originLanguages}</p>
         </div>
         <div class="etym-box">
-          <div class="etym-box-label">ROOT WORD(S) &amp; MEANINGS</div>
+          <div class="etym-box-label" data-translate="roots-label">ROOT WORD(S) & MEANINGS</div>
           <ul class="etym-roots-list">${rootsListHtml}</ul>
         </div>
       </div>
       <div class="etym-section">
-        <div class="etym-section-label">WORD EVOLUTION PATH</div>
+        <div class="etym-section-label" data-translate="evolution-label">WORD EVOLUTION PATH</div>
         <p class="etym-evolution-path">${evolutionPathText}</p>
       </div>
       <div class="etym-section">
-        <div class="etym-section-label">HOW MEANING CHANGED OVER TIME</div>
-        <p>${meaningEvolutionText}</p>
+        <div class="etym-section-label" data-translate="meaning-changed-label">HOW MEANING CHANGED OVER TIME</div>
+        <p data-translate-etym="${meaningEvoAttr}">${meaningEvolutionText}</p>
       </div>
       <div class="etym-section">
-        <div class="etym-section-label">PRESENT-DAY MEANING</div>
-        <p>${presentDayMeaning}</p>
+        <div class="etym-section-label" data-translate="present-meaning-label">PRESENT-DAY MEANING</div>
+        <p data-translate-etym="${presentDayAttr}">${presentDayMeaning}</p>
       </div>
       <div class="etym-core-idea">
-        <div class="etym-section-label">CORE IDEA</div>
-        <p>&ldquo;<strong>${coreIdea}</strong>&rdquo;</p>
+        <div class="etym-section-label" data-translate="core-idea-label">CORE IDEA</div>
+        <p data-translate-etym="${coreIdeaAttr}">&ldquo;<strong>${coreIdea}</strong>&rdquo;</p>
       </div>
-      <p class="etymology-source">More details at <a href="${etymologyUrl}" target="_blank" rel="noopener noreferrer">Etymonline</a></p>
+      <p class="etymology-source"><span data-translate="more-details">More details at</span> <a href="${etymologyUrl}" target="_blank" rel="noopener noreferrer"><span data-translate="etymonline">Etymonline</span></a></p>
     </div>
   `;
 }
@@ -406,159 +467,281 @@ function isValidTranslation(result, source) {
   return true;
 }
 
-async function fetchTranslation(text, langCode) {
+// Parallel pool (not fully serial) + in-flight dedupe + localStorage cache
+const TX_CONCURRENCY = 5;
+const TX_CACHE_STORAGE_KEY = 'wordfission-tx-cache-v1';
+const translationInflight = new Map();
+let _txActive = 0;
+const _txWaiters = [];
+let _txCacheSaveTimer = null;
+
+(function loadTranslationCache() {
+  try {
+    const raw = localStorage.getItem(TX_CACHE_STORAGE_KEY);
+    if (!raw) return;
+    const entries = JSON.parse(raw);
+    if (entries && typeof entries === 'object') {
+      Object.entries(entries).forEach(([k, v]) => {
+        if (typeof v === 'string' && v) translationCache.set(k, v);
+      });
+    }
+  } catch (_) { /* ignore */ }
+})();
+
+function persistTranslationCache() {
+  clearTimeout(_txCacheSaveTimer);
+  _txCacheSaveTimer = setTimeout(() => {
+    try {
+      const obj = {};
+      let i = 0;
+      for (const [k, v] of translationCache) {
+        obj[k] = v;
+        if (++i >= 400) break; // keep storage bounded
+      }
+      localStorage.setItem(TX_CACHE_STORAGE_KEY, JSON.stringify(obj));
+    } catch (_) { /* quota / private mode */ }
+  }, 400);
+}
+
+function drainTxQueue() {
+  while (_txActive < TX_CONCURRENCY && _txWaiters.length) {
+    _txWaiters.sort((a, b) => b.priority - a.priority);
+    const job = _txWaiters.shift();
+    _txActive++;
+    Promise.resolve()
+      .then(job.fn)
+      .then(job.resolve, job.reject)
+      .finally(() => {
+        _txActive--;
+        drainTxQueue();
+      });
+  }
+}
+
+function enqueueTx(priority, fn) {
+  return new Promise((resolve, reject) => {
+    _txWaiters.push({ priority, fn, resolve, reject });
+    drainTxQueue();
+  });
+}
+
+async function fetchTranslation(text, langCode, priority = 0) {
   const sanitized = text.trim().replace(/\s+/g, ' ');
   if (!sanitized) return null;
   const key = sanitized + '|' + langCode;
   if (translationCache.has(key)) return translationCache.get(key);
-  try {
+  if (translationInflight.has(key)) return translationInflight.get(key);
+
+  const promise = enqueueTx(priority, async () => {
     const url = MYMEMORY_API + '?q=' + encodeURIComponent(sanitized) + '&langpair=en|' + langCode;
     const res = await fetch(url);
-    if (!res.ok) throw new Error('Translation failed');
+    if (!res.ok) return null;
     const data = await res.json();
     const result = (data?.responseData?.translatedText || '').trim();
     if (isValidTranslation(result, sanitized)) {
       translationCache.set(key, result);
+      persistTranslationCache();
       return result;
     }
     return null;
-  } catch (e) {
-    return null;
+  }).catch(() => null).finally(() => {
+    translationInflight.delete(key);
+  });
+
+  translationInflight.set(key, promise);
+  return promise;
+}
+
+function makeTranslationPill(cls) {
+  const el = document.createElement('span');
+  el.className = 'inline-translation translation-skeleton' + (cls ? ' ' + cls : '');
+  return el;
+}
+
+function resolveTranslationPill(pill, text, cls) {
+  if (text) {
+    pill.className = 'inline-translation' + (cls ? ' ' + cls : '');
+    pill.textContent = text;
+  } else {
+    pill.remove();
   }
+}
+
+async function translateUIElements(langCode, langName, root) {
+  const scope = root || document;
+
+  if (langCode === 'en') {
+    scope.querySelectorAll('[data-translate]').forEach(el => {
+      el.querySelectorAll(':scope > .inline-translation').forEach(p => p.remove());
+    });
+    if (!root) {
+      document.querySelectorAll('[data-translate-placeholder]').forEach(el => {
+        const key = el.dataset.translatePlaceholder;
+        const originalText = UI_STRINGS[key];
+        if (originalText) el.placeholder = originalText;
+      });
+    }
+    translateBtn.innerHTML = '🌐 Translate ▼';
+    translateBtn.classList.remove('translate-btn--active');
+    translateBtn.dataset.activeLang = '';
+    translateBtn.dataset.activeLangCode = 'en';
+    return;
+  }
+
+  scope.querySelectorAll('[data-translate]').forEach(el => {
+    // Button label is managed separately
+    if (el.id === 'translate-btn' || el.id === 'theme-toggle') return;
+
+    const key = el.dataset.translate;
+    const originalText = UI_STRINGS[key];
+    if (!originalText) return;
+
+    el.querySelectorAll(':scope > .inline-translation').forEach(p => p.remove());
+
+    const pill = makeTranslationPill('ui-translation');
+    pill.style.display = 'inline';
+    pill.style.marginLeft = '6px';
+    el.appendChild(pill);
+
+    fetchTranslation(originalText, langCode).then(translated => {
+      if (translated) {
+        resolveTranslationPill(pill, translated, 'ui-translation');
+        pill.style.display = 'inline';
+        pill.style.marginLeft = '6px';
+      } else {
+        pill.remove();
+      }
+    });
+  });
+
+  if (!root) {
+    document.querySelectorAll('[data-translate-placeholder]').forEach(el => {
+      const key = el.dataset.translatePlaceholder;
+      const originalText = UI_STRINGS[key];
+      if (!originalText) return;
+      fetchTranslation(originalText, langCode).then(translated => {
+        if (translated) el.placeholder = translated;
+      });
+    });
+  }
+
+  if (langName) {
+    translateBtn.innerHTML = '🌐 ' + langName + ' ▼';
+    translateBtn.classList.add('translate-btn--active');
+  }
+
+  translateBtn.dataset.activeLang = langName || '';
+  translateBtn.dataset.activeLangCode = langCode;
 }
 
 async function applyInlineTranslations(langCode, langName) {
   const card = outputPanel.querySelector('.definition-card');
   if (!card || !currentEntry) return;
 
-  // Remove any previous translation pills
-  card.querySelectorAll('.inline-translation').forEach(el => el.remove());
-  card.querySelectorAll('.translation-badge').forEach(el => el.remove());
+  // Clear previous content pills (keep UI label pills managed by translateUIElements)
+  card.querySelectorAll('.inline-translation:not(.ui-translation)').forEach(el => el.remove());
 
-  // Show skeleton loaders on every translatable target
-  function addSkeleton(parent, cls) {
-    const sk = document.createElement('span');
-    sk.className = 'inline-translation translation-skeleton ' + cls;
-    parent.appendChild(sk);
-    return sk;
+  if (langCode === 'en') return;
+
+  // ── Word title ──────────────────────────────────────────────────────────────
+  const titleEl = card.querySelector('[data-translate-word]');
+  if (titleEl) {
+    const wordText = titleEl.dataset.translateWord;
+    const pill = makeTranslationPill('word-translation');
+    titleEl.appendChild(pill);
+    fetchTranslation(wordText, langCode, 1).then(r =>
+      resolveTranslationPill(pill, r, 'word-translation')
+    );
   }
 
-  // Word title
-  const h2 = card.querySelector('h2[data-translate-word]');
-  let wordSkeleton = null;
-  if (h2) wordSkeleton = addSkeleton(h2, 'word-translation');
-
-  // Defs, examples, synonyms
-  const defTargets = [];
-  card.querySelectorAll('.translatable-def[data-translate-def]').forEach(el => {
-    defTargets.push({ el, text: el.dataset.translateDef, skeleton: addSkeleton(el.closest('li'), 'def-translation') });
-  });
-  const exTargets = [];
-  card.querySelectorAll('[data-translate-example]').forEach(el => {
-    exTargets.push({ el, text: el.dataset.translateExample, skeleton: addSkeleton(el.closest('.example'), 'ex-translation') });
-  });
-  const synTargets = [];
-  card.querySelectorAll('[data-translate-synonyms]').forEach(el => {
-    synTargets.push({ el, text: el.dataset.translateSynonyms, skeleton: addSkeleton(el, 'syn-translation') });
-  });
-
-  // Fetch word translation first (most important)
-  const wordText = currentEntry.word;
-  const wordResult = await fetchTranslation(wordText, langCode);
-  if (wordSkeleton) {
-    if (wordResult) {
-      wordSkeleton.className = 'inline-translation word-translation';
-      wordSkeleton.textContent = wordResult;
-    } else {
-      wordSkeleton.remove();
-    }
+  // ── Word summary ────────────────────────────────────────────────────────────
+  const summaryEl = card.querySelector('[data-translate-summary]');
+  if (summaryEl) {
+    const summaryText = summaryEl.dataset.translateSummary;
+    const pill = makeTranslationPill('summary-translation');
+    summaryEl.appendChild(pill);
+    fetchTranslation(summaryText, langCode).then(r =>
+      resolveTranslationPill(pill, r, 'summary-translation')
+    );
   }
 
-  // Fetch all defs in parallel
-  const defResults = await Promise.all(defTargets.map(t => fetchTranslation(t.text, langCode)));
-  defTargets.forEach((t, i) => {
-    if (defResults[i]) {
-      t.skeleton.className = 'inline-translation def-translation';
-      t.skeleton.textContent = defResults[i];
-    } else {
-      t.skeleton.remove();
+  // ── Definitions + examples ──────────────────────────────────────────────────
+  card.querySelectorAll('.meaning-list li').forEach((li) => {
+    const block = li.closest('.meaning-block');
+    const blockIdx = Array.from(card.querySelectorAll('.meaning-block')).indexOf(block);
+    const liIdx = Array.from(li.parentElement.children).indexOf(li);
+    const def = currentEntry.meanings[blockIdx]?.definitions[liIdx];
+    if (!def) return;
+
+    const defText = def.definition.replace(/\s+/g, ' ').trim().slice(0, 180);
+    const defPill = makeTranslationPill('def-translation');
+    li.appendChild(defPill);
+    fetchTranslation(defText, langCode).then(r =>
+      resolveTranslationPill(defPill, r, 'def-translation')
+    );
+
+    if (def.example) {
+      const exText = def.example.replace(/\s+/g, ' ').trim().slice(0, 180);
+      const exEl = li.querySelector('.example');
+      if (exEl) {
+        const exPill = makeTranslationPill('ex-translation');
+        exEl.appendChild(exPill);
+        fetchTranslation(exText, langCode).then(r =>
+          resolveTranslationPill(exPill, r ? '\u201c' + r + '\u201d' : null, 'ex-translation')
+        );
+      }
     }
   });
 
-  // Fetch examples in parallel
-  const exResults = await Promise.all(exTargets.map(t => fetchTranslation(t.text, langCode)));
-  exTargets.forEach((t, i) => {
-    if (exResults[i]) {
-      t.skeleton.className = 'inline-translation ex-translation';
-      t.skeleton.textContent = '\u201c' + exResults[i] + '\u201d';
-    } else {
-      t.skeleton.remove();
-    }
+  // ── Synonyms ────────────────────────────────────────────────────────────────
+  card.querySelectorAll('.meaning-block').forEach((block, bi) => {
+    const meaning = currentEntry.meanings[bi];
+    if (!meaning) return;
+    const synonyms = [...new Set([
+      ...(meaning.synonyms || []),
+      ...meaning.definitions.flatMap(d => d.synonyms || [])
+    ])].slice(0, 6);
+    if (!synonyms.length) return;
+
+    const synEl = block.querySelector('.word-list[data-translate-synonyms]');
+    if (!synEl) return;
+
+    const pill = makeTranslationPill('syn-translation');
+    synEl.appendChild(pill);
+
+    Promise.all(synonyms.map(w => fetchTranslation(w, langCode)))
+      .then(results => {
+        const translated = results.filter(Boolean);
+        resolveTranslationPill(pill, translated.length ? translated.join(', ') : null, 'syn-translation');
+      });
   });
 
-  // Fetch synonyms in parallel
-  const synResults = await Promise.all(synTargets.map(t => fetchTranslation(t.text, langCode)));
-  synTargets.forEach((t, i) => {
-    if (synResults[i]) {
-      t.skeleton.className = 'inline-translation syn-translation';
-      t.skeleton.textContent = synResults[i];
-    } else {
-      t.skeleton.remove();
-    }
+  // ── Etymology body text ─────────────────────────────────────────────────────
+  card.querySelectorAll('[data-translate-etym]').forEach(el => {
+    const text = (el.dataset.translateEtym || '').replace(/\s+/g, ' ').trim().slice(0, 220);
+    if (!text) return;
+    const pill = makeTranslationPill('def-translation');
+    el.appendChild(pill);
+    fetchTranslation(text, langCode).then(r =>
+      resolveTranslationPill(pill, r, 'def-translation')
+    );
   });
-
-  // Show active language badge on the button
-  const btn = document.getElementById('translate-btn');
-  if (btn) {
-    btn.dataset.activeLang = langName;
-    btn.innerHTML = '🌐 ' + langName + ' ▼';
-    btn.classList.add('translate-btn--active');
-  }
 }
 
-// Inline translation: annotate the rendered card with data-translate-* attributes
-// then fill them in after fetching. No separate section needed.
 function annotateCardForTranslation(entry) {
   const card = outputPanel.querySelector('.definition-card');
   if (!card) return;
 
-  // Word title
-  const h2 = card.querySelector('h2');
-  if (h2) h2.dataset.translateWord = entry.word;
-
-  // Each meaning block
   card.querySelectorAll('.meaning-block').forEach((block, bi) => {
     const meaning = entry.meanings[bi];
     if (!meaning) return;
-
-    block.querySelectorAll('.meaning-list li').forEach((li, di) => {
-      const def = meaning.definitions[di];
-      if (!def) return;
-      // Definition text node — wrap it
-      const defSpan = document.createElement('span');
-      defSpan.className = 'translatable-def';
-      defSpan.dataset.translateDef = def.definition.slice(0, 180);
-      // Move existing child nodes into the span
-      while (li.firstChild) defSpan.appendChild(li.firstChild);
-      li.appendChild(defSpan);
-
-      // Example
-      const exampleEl = li.querySelector('.example strong');
-      if (exampleEl && def.example) {
-        exampleEl.dataset.translateExample = def.example.slice(0, 180);
-      }
-    });
-
-    // Synonyms
-    const synonyms = [
+    const synonyms = [...new Set([
       ...(meaning.synonyms || []),
       ...meaning.definitions.flatMap(d => d.synonyms || [])
-    ];
-    const uniqueSynonyms = [...new Set(synonyms)];
-    if (uniqueSynonyms.length) {
-      const synEl = block.querySelector('.word-list');
-      if (synEl) synEl.dataset.translateSynonyms = uniqueSynonyms.slice(0, 8).join(', ');
-    }
+    ])].slice(0, 6);
+    if (!synonyms.length) return;
+    const synEl = block.querySelector('.word-list');
+    if (synEl) synEl.dataset.translateSynonyms = '1';
   });
 }
 
@@ -567,6 +750,14 @@ function shortenText(text, maxLength = 150) {
   const trimmed = text.trim();
   if (trimmed.length <= maxLength) return trimmed;
   return `${trimmed.slice(0, maxLength).replace(/\s+$/, '')}...`;
+}
+
+function escAttr(text) {
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
 
 function initTheme() {
@@ -580,7 +771,11 @@ function initTheme() {
 }
 
 async function lookupWord(word) {
-  outputPanel.innerHTML = '<div class="output-empty">Loading definition...</div>';
+  outputPanel.innerHTML = '<div class="output-empty" data-translate="loading">Loading definition...</div>';
+  const btn = document.getElementById('translate-btn');
+  if (btn && btn.dataset.activeLang && btn.dataset.activeLangCode) {
+    translateUIElements(btn.dataset.activeLangCode, btn.dataset.activeLang, outputPanel);
+  }
 
   try {
     const response = await fetch(`${API_BASE}/${encodeURIComponent(word)}`);
@@ -591,7 +786,10 @@ async function lookupWord(word) {
     await renderResult(data[0]);
     saveRecentSearch(word);
   } catch (error) {
-    outputPanel.innerHTML = `<div class="output-empty">Unable to find "${word}". Try another word.</div>`;
+    outputPanel.innerHTML = `<div class="output-empty"><span data-translate="not-found">Unable to find</span> "${word}". <span data-translate="try-another">Try another word.</span></div>`;
+    if (btn && btn.dataset.activeLang && btn.dataset.activeLangCode) {
+      translateUIElements(btn.dataset.activeLangCode, btn.dataset.activeLang, outputPanel);
+    }
   }
 }
 
@@ -604,7 +802,11 @@ async function renderResult(entry) {
   const phonetics = entry.phonetics.find((item) => item.text) || {};
   const audioSource = entry.phonetics.find((item) => item.audio) || {};
   if (!entry.meanings || !entry.meanings.length) {
-    outputPanel.innerHTML = `<div class="output-empty">No definitions available for "${entry.word}".</div>`;
+    outputPanel.innerHTML = `<div class="output-empty"><span data-translate="no-definitions">No definitions available for</span> "${entry.word}".</div>`;
+    const btn = document.getElementById('translate-btn');
+    if (btn && btn.dataset.activeLang && btn.dataset.activeLangCode) {
+      translateUIElements(btn.dataset.activeLangCode, btn.dataset.activeLang, outputPanel);
+    }
     return;
   }
 
@@ -664,7 +866,7 @@ async function renderResult(entry) {
   const relatedWords = await fetchRelatedWords(entry.word);
   const relatedWordsHtml = relatedWords.length
     ? `<div class="more-words-section">
-         <h3>More words</h3>
+         <h3 data-translate="more-words">More words</h3>
          <div class="word-tags">
            ${relatedWords.map((word) => `<button type="button" class="word-tag" data-word="${word}">${word}</button>`).join('')}
          </div>
@@ -673,7 +875,7 @@ async function renderResult(entry) {
 
   const summary = shortenText(entry.meanings?.[0]?.definitions?.[0]?.definition || '', 140);
   const summaryHtml = summary
-    ? `<p class="word-summary">${summary}</p>`
+    ? `<p class="word-summary" data-translate-summary="${escAttr(summary)}">${summary}</p>`
     : '';
 
   const etymologyHtml = etymologyText ? buildEtymologyCardHtml(entry.word, etymologyText, entry, etymologyUrl) : '';
@@ -703,7 +905,7 @@ async function renderResult(entry) {
     <div class="definition-card">
       <div class="definition-header">
         <div class="definition-title-row">
-          <h2>${entry.word}</h2>
+          <h2 data-translate-word="${escAttr(entry.word)}">${entry.word}</h2>
           <div class="definition-actions">
             <button class="bookmark-button ${activeClass}" data-word="${entry.word}" aria-label="Bookmark word">${starSvg}</button>
             ${audioSource.audio ? `<button class="audio-button" data-audio="${audioSource.audio}" aria-label="Play pronunciation">${audioSvg}</button>` : ''}
@@ -722,10 +924,14 @@ async function renderResult(entry) {
 
   annotateCardForTranslation(entry);
 
-  // Re-apply translation if a language is already active
+  // Re-apply translation if a language is already active (card was rebuilt)
   const btn = document.getElementById('translate-btn');
   if (btn && btn.dataset.activeLang && btn.dataset.activeLangCode) {
-    applyInlineTranslations(btn.dataset.activeLangCode, btn.dataset.activeLang);
+    const code = btn.dataset.activeLangCode;
+    const name = btn.dataset.activeLang;
+    const card = outputPanel.querySelector('.definition-card');
+    translateUIElements(code, name, card);
+    applyInlineTranslations(code, name);
   }
 }
 
@@ -919,6 +1125,11 @@ translatePanel.addEventListener('click', (e) => {
   translateBtn.dataset.activeLangCode = langCode;
   translateBtn.innerHTML = '🌐 ' + langName + ' ▼';
   translateBtn.classList.add('translate-btn--active');
+  
+  // Translate UI elements
+  translateUIElements(langCode, langName);
+  
+  // Translate word content if available
   if (currentEntry) {
     applyInlineTranslations(langCode, langName);
   }

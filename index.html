@@ -14,14 +14,14 @@
       <div class="hero-icon"><img src="logo.png" alt="WordFission Logo" class="brand-logo" /></div>
       <div>
         <h1><a href="index.html" class="brand-link">WordFission <span class="brand-tick">✓</span></a></h1>
-        <p>Discover meanings, pronunciation, etymology, and examples for any word</p>
+        <p data-translate="tagline">Discover meanings, pronunciation, etymology, and examples for any word</p>
       </div>
       <button id="theme-toggle" class="theme-toggle" aria-label="Toggle light dark mode">🌙 Dark</button>
       <div class="translate-dropdown-wrap" id="translate-dropdown-wrap">
         <button id="translate-btn" class="translate-btn" aria-haspopup="listbox" aria-expanded="false" aria-label="Translate word">🌐 Translate ▼</button>
         <div class="translate-panel" id="translate-panel" role="listbox" aria-label="Select language" hidden>
           <div class="translate-panel-search">
-            <input type="text" id="translate-filter" placeholder="Filter languages..." autocomplete="off" />
+            <input type="text" id="translate-filter" placeholder="Filter languages..." data-translate-placeholder="filter-langs" autocomplete="off" />
           </div>
           <div class="translate-lang-list" id="translate-lang-list"></div>
         </div>
@@ -30,12 +30,12 @@
 
     <main class="content">
       <section class="search-panel">
-        <label for="search-input" class="visually-hidden">Search for any word</label>
+        <label for="search-input" class="visually-hidden" data-translate="search-label">Search for any word</label>
         <div class="search-container">
           <div class="search-box">
             <span class="search-icon">🔍</span>
-            <input id="search-input" type="text" placeholder="Search for any word..." autocomplete="off" />
-            <button id="search-button">Search</button>
+            <input id="search-input" type="text" placeholder="Search for any word..." data-translate-placeholder="search-placeholder" autocomplete="off" />
+            <button id="search-button" data-translate="search-btn">Search</button>
           </div>
           <div class="suggestions-panel" id="suggestions-panel" aria-live="polite"></div>
         </div>
@@ -48,23 +48,23 @@
 
       <div class="bottom-layout">
         <section class="bottom-section" id="recent-section">
-          <h3>Recent Searches</h3>
+          <h3 data-translate="recent-title">Recent Searches</h3>
           <div class="recent-list" id="recent-list">
-            <p class="sidebar-empty">No recent searches</p>
+            <p class="sidebar-empty" data-translate="no-recent">No recent searches</p>
           </div>
         </section>
 
         <section class="bottom-section" id="favorites-section">
-          <h3>Bookmarked Words</h3>
+          <h3 data-translate="favorites-title">Bookmarked Words</h3>
           <div class="favorites-list" id="favorites-list">
-            <p class="sidebar-empty">No bookmarked words</p>
+            <p class="sidebar-empty" data-translate="no-favorites">No bookmarked words</p>
           </div>
         </section>
       </div>
     </main>
 
     <footer class="footer">
-      <p>© 2025 WordFission. Enhance your vocabulary every day.</p>
+      <p data-translate="footer-text">© 2025 WordFission. Enhance your vocabulary every day.</p>
     </footer>
   </div>
 

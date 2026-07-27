@@ -962,6 +962,22 @@ p {
   display: inline;
 }
 
+.ui-translation {
+  display: inline;
+  margin-top: 0;
+  margin-left: 6px;
+  font-size: 0.85em;
+  font-weight: 600;
+  color: var(--primary);
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.summary-translation {
+  margin-top: 6px;
+  max-width: 720px;
+}
+
 .def-translation {
   color: var(--muted);
   font-style: italic;
