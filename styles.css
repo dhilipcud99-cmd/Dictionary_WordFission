@@ -88,27 +88,21 @@ body {
 .hero-icon {
   width: 72px;
   height: 72px;
-  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--tag-bg);
-  overflow: hidden;
-  border: 1px solid var(--border);
   flex-shrink: 0;
 }
 
 .brand-logo {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  object-position: center 30%;
-  transform: scale(1.25);
+  object-fit: contain;
   transition: var(--transition);
 }
 
 .hero-icon:hover .brand-logo {
-  transform: scale(1.35) rotate(5deg);
+  transform: scale(1.08);
 }
 
 h1 {
