@@ -14,12 +14,58 @@
     <header class="hero">
       <div class="hero-icon"><img src="logo.png?v=2" alt="WordFission Logo" class="brand-logo" /></div>
       <div>
-        <h1><a href="index.html" class="brand-link">WordFission <span class="brand-tick">✓</span></a></h1>
+        <h1><a href="index.html" class="brand-link">WordFission</a></h1>
         <p data-translate="tagline">Discover meanings, pronunciation, etymology, and examples for any word</p>
       </div>
-      <button id="theme-toggle" class="theme-toggle" aria-label="Toggle light dark mode">🌙 Dark</button>
+      <button id="theme-toggle" class="theme-toggle" aria-label="Toggle light dark mode">
+        <svg class="icon-svg theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path class="icon-moon" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          <circle class="icon-sun" cx="12" cy="12" r="5" style="display: none;"></circle>
+          <line class="icon-sun" x1="12" y1="1" x2="12" y2="3" style="display: none;"></line>
+          <line class="icon-sun" x1="12" y1="21" x2="12" y2="23" style="display: none;"></line>
+          <line class="icon-sun" x1="4.22" y1="4.22" x2="5.64" y2="5.64" style="display: none;"></line>
+          <line class="icon-sun" x1="18.36" y1="18.36" x2="19.78" y2="19.78" style="display: none;"></line>
+          <line class="icon-sun" x1="1" y1="12" x2="3" y2="12" style="display: none;"></line>
+          <line class="icon-sun" x1="21" y1="12" x2="23" y2="12" style="display: none;"></line>
+          <line class="icon-sun" x1="4.22" y1="19.78" x2="5.64" y2="18.36" style="display: none;"></line>
+          <line class="icon-sun" x1="18.36" y1="5.64" x2="19.78" y2="4.22" style="display: none;"></line>
+        </svg>
+        <span class="btn-label">Dark</span>
+      </button>
+      <div class="accent-dropdown-wrap" id="accent-dropdown-wrap">
+        <button id="accent-btn" class="accent-btn" aria-haspopup="listbox" aria-expanded="false" aria-label="Choose accent color">
+          <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 14.7255 3.09032 17.1962 4.85857 19C5.34443 19.4859 5.58735 19.7288 5.75338 20.0401C5.91942 20.3514 5.99026 20.7309 6.13195 21.49C6.22341 21.9801 6.65086 22 7.0003 22H12Z"></path>
+            <circle cx="7.5" cy="10.5" r="1.5" fill="currentColor"></circle>
+            <circle cx="11.5" cy="7.5" r="1.5" fill="currentColor"></circle>
+            <circle cx="16.5" cy="9.5" r="1.5" fill="currentColor"></circle>
+            <circle cx="15.5" cy="14.5" r="1.5" fill="currentColor"></circle>
+          </svg>
+          <span class="btn-label">Color</span>
+        </button>
+        <div class="accent-panel" id="accent-panel" role="listbox" aria-label="Select accent color" hidden>
+          <div class="accent-presets">
+            <button class="accent-preset-btn" data-color="#10A37F" style="background: #10A37F;" title="ChatGPT Green"></button>
+            <button class="accent-preset-btn" data-color="#5B4BDB" style="background: #5B4BDB;" title="Deep Purple"></button>
+            <button class="accent-preset-btn" data-color="#3B82F6" style="background: #3B82F6;" title="Blue"></button>
+            <button class="accent-preset-btn" data-color="#EF4444" style="background: #EF4444;" title="Red"></button>
+            <button class="accent-preset-btn" data-color="#F59E0B" style="background: #F59E0B;" title="Amber"></button>
+          </div>
+          <div class="accent-custom">
+            <span class="accent-custom-label">Custom:</span>
+            <input type="color" id="accent-color-picker" value="#10A37F" aria-label="Custom color picker" />
+          </div>
+        </div>
+      </div>
       <div class="translate-dropdown-wrap" id="translate-dropdown-wrap">
-        <button id="translate-btn" class="translate-btn" aria-haspopup="listbox" aria-expanded="false" aria-label="Translate word">🌐 Translate ▼</button>
+        <button id="translate-btn" class="translate-btn" aria-haspopup="listbox" aria-expanded="false" aria-label="Translate word">
+          <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="2" y1="12" x2="22" y2="12"></line>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+          </svg>
+          <span class="btn-label">Translate</span>
+        </button>
         <div class="translate-panel" id="translate-panel" role="listbox" aria-label="Select language" hidden>
           <div class="translate-panel-search">
             <input type="text" id="translate-filter" placeholder="Filter languages..." data-translate-placeholder="filter-langs" autocomplete="off" />
@@ -31,12 +77,21 @@
 
     <main class="content">
       <section class="search-panel">
-        <label for="search-input" class="visually-hidden" data-translate="search-label">Search for any word</label>
+         <label for="search-input" class="visually-hidden" data-translate="search-label">Search for any word</label>
         <div class="search-container">
           <div class="search-box">
-            <span class="search-icon">🔍</span>
+            <svg class="icon-svg search-box-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
             <input id="search-input" type="text" placeholder="Search for any word..." data-translate-placeholder="search-placeholder" autocomplete="off" />
-            <button id="search-button" data-translate="search-btn">Search</button>
+            <button id="search-button">
+              <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <span class="btn-label" data-translate="search-btn">Search</span>
+            </button>
           </div>
           <div class="suggestions-panel" id="suggestions-panel" aria-live="polite"></div>
         </div>
@@ -49,14 +104,19 @@
 
       <div class="bottom-layout">
         <section class="bottom-section" id="recent-section">
-          <h3 data-translate="recent-title">Recent Searches</h3>
+          <div class="section-title-bar">
+            <h3 data-translate="recent-title">Recent Searches</h3>
+            <button id="clear-recents-btn" class="clear-history-btn" data-translate="clear-history" style="display: none;">Clear History</button>
+          </div>
           <div class="recent-list" id="recent-list">
             <p class="sidebar-empty" data-translate="no-recent">No recent searches</p>
           </div>
         </section>
 
         <section class="bottom-section" id="favorites-section">
-          <h3 data-translate="favorites-title">Bookmarked Words</h3>
+          <div class="section-title-bar">
+            <h3 data-translate="favorites-title">Bookmarked Words</h3>
+          </div>
           <div class="favorites-list" id="favorites-list">
             <p class="sidebar-empty" data-translate="no-favorites">No bookmarked words</p>
           </div>

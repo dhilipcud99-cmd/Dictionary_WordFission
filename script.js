@@ -535,59 +535,189 @@ function clearSuggestions() {
 function getRecentSearches() {
   try {
     const list = localStorage.getItem('wordfission-recents');
-    return list ? JSON.parse(list) : [];
+    const parsed = list ? JSON.parse(list) : [];
+    return parsed.map(item => {
+      if (typeof item === 'string') {
+        return {
+          word: item,
+          phonetic: '',
+          partOfSpeech: 'noun',
+          definition: 'Search to view definition.'
+        };
+      }
+      return item;
+    });
+  } catch (e) {
+    return [];
+  }
+}
+async function fetchWordThumbnail(word) {
+  const url = `https://commons.wikimedia.org/w/api.php?action=query&format=json&prop=imageinfo&iiprop=url&generator=search&gsrnamespace=6&gsrsearch=${encodeURIComponent(word)}&gsrlimit=1&origin=*`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return '';
+    const data = await res.json();
+    if (!data.query || !data.query.pages) return '';
+    const pages = Object.values(data.query.pages);
+    if (pages[0] && pages[0].imageinfo && pages[0].imageinfo[0]) {
+      return pages[0].imageinfo[0].url;
+    }
+  } catch (e) {
+    console.error('Failed to fetch thumbnail for:', word, e);
+  }
+  return '';
+}
+
+function getRecentSearches() {
+  try {
+    const list = localStorage.getItem('wordfission-recents');
+    const parsed = list ? JSON.parse(list) : [];
+    return parsed.map(item => {
+      if (typeof item === 'string') {
+        return {
+          word: item,
+          phonetic: '',
+          partOfSpeech: 'noun',
+          definition: 'Search to view definition.',
+          thumbnail: ''
+        };
+      }
+      return item;
+    });
   } catch (e) {
     return [];
   }
 }
 
-function saveRecentSearch(word) {
-  if (!word) return;
-  const wordLower = word.toLowerCase().trim();
+async function saveRecentSearch(entry) {
+  if (!entry || !entry.word) return;
+  const word = entry.word.trim();
+  const wordLower = word.toLowerCase();
+  
+  const thumbnail = await fetchWordThumbnail(word);
+
+  const recentInfo = {
+    word: word,
+    phonetic: entry.phonetic || entry.phonetics?.find(p => p.text)?.text || '',
+    partOfSpeech: entry.meanings?.[0]?.partOfSpeech || 'noun',
+    definition: entry.meanings?.[0]?.definitions?.[0]?.definition || 'No definition available',
+    thumbnail: thumbnail
+  };
+
   let recents = getRecentSearches();
-  recents = recents.filter(w => w.toLowerCase() !== wordLower);
-  recents.unshift(word);
-  if (recents.length > 5) recents.pop();
+  recents = recents.filter(item => item.word.toLowerCase() !== wordLower);
+  recents.unshift(recentInfo);
+  
+  if (recents.length > 6) recents.pop();
+  
   localStorage.setItem('wordfission-recents', JSON.stringify(recents));
   renderRecentSearches();
 }
 
 function renderRecentSearches() {
   const recents = getRecentSearches();
+  const clearBtn = document.getElementById('clear-recents-btn');
+
   if (recents.length === 0) {
     recentList.innerHTML = '<p class="sidebar-empty" data-translate="no-recent">No recent searches</p>';
+    if (clearBtn) clearBtn.style.display = 'none';
     const btn = document.getElementById('translate-btn');
     if (btn && btn.dataset.activeLang && btn.dataset.activeLangCode) {
       translateUIElements(btn.dataset.activeLangCode, btn.dataset.activeLang, recentList);
     }
     return;
   }
+
+  if (clearBtn) clearBtn.style.display = 'inline-block';
+
   recentList.innerHTML = recents
-    .map(word => `<button type="button" class="recent-item" data-word="${word}">${word}</button>`)
+    .map(entry => {
+      const definition = shortenText(entry.definition || 'No definition available', 100);
+      return `
+        <div class="showcase-card">
+          <div class="card-header-row">
+            <div class="card-thumbnail-wrap">
+              ${entry.thumbnail ? `
+                <img class="card-thumbnail" src="${entry.thumbnail}" alt="${entry.word}" loading="lazy" />
+              ` : `
+                <div class="card-thumbnail-placeholder">${entry.word.charAt(0).toUpperCase()}</div>
+              `}
+            </div>
+            <div class="card-header-text">
+              <div class="card-word-line">
+                <h3 class="showcase-word">${entry.word}</h3>
+                <span class="showcase-pos">${entry.partOfSpeech}</span>
+              </div>
+              ${entry.phonetic ? `<div class="showcase-pronunciation">${entry.phonetic}</div>` : ''}
+            </div>
+          </div>
+          <p class="showcase-definition">${definition}</p>
+          <button class="showcase-learn-more" data-word="${entry.word}">View Details →</button>
+        </div>
+      `;
+    })
     .join('');
+
+  recentList.querySelectorAll('.showcase-learn-more').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const word = e.currentTarget.dataset.word;
+      searchInput.value = word;
+      lookupWord(word);
+    });
+  });
 }
 
 function getBookmarks() {
   try {
     const list = localStorage.getItem('wordfission-bookmarks');
-    return list ? JSON.parse(list) : [];
+    const parsed = list ? JSON.parse(list) : [];
+    return parsed.map(item => {
+      if (typeof item === 'string') {
+        return {
+          word: item,
+          phonetic: '',
+          partOfSpeech: 'noun',
+          definition: 'Search to view definition.',
+          thumbnail: ''
+        };
+      }
+      return item;
+    });
   } catch (e) {
     return [];
   }
 }
 
-function toggleBookmark(word) {
+async function toggleBookmark(word) {
   if (!word) return;
   const wordLower = word.toLowerCase().trim();
   let bookmarks = getBookmarks();
-  const exists = bookmarks.some(w => w.toLowerCase() === wordLower);
+  const exists = bookmarks.some(item => item.word.toLowerCase() === wordLower);
+  
   if (exists) {
-    bookmarks = bookmarks.filter(w => w.toLowerCase() !== wordLower);
+    bookmarks = bookmarks.filter(item => item.word.toLowerCase() !== wordLower);
   } else {
-    bookmarks.push(word);
+    let entry = currentEntry;
+    if (!entry || entry.word.toLowerCase() !== wordLower) {
+      entry = await fetchFromApiWithFallback(word) || await fetchFromWiktionary(word) || await fetchFromWikipedia(word);
+    }
+    
+    if (entry) {
+      const merged = entry.meanings ? entry : mergeDictionaryEntries(entry);
+      const thumbnail = await fetchWordThumbnail(word);
+      bookmarks.push({
+        word: merged.word,
+        phonetic: merged.phonetic || merged.phonetics?.find(p => p.text)?.text || '',
+        partOfSpeech: merged.meanings?.[0]?.partOfSpeech || 'noun',
+        definition: merged.meanings?.[0]?.definitions?.[0]?.definition || 'No definition available',
+        thumbnail: thumbnail
+      });
+    }
   }
+  
   localStorage.setItem('wordfission-bookmarks', JSON.stringify(bookmarks));
   renderBookmarks();
+  
   const btn = document.querySelector('.bookmark-button');
   if (btn && btn.dataset.word.toLowerCase() === wordLower) {
     btn.classList.toggle('active', !exists);
@@ -604,14 +734,50 @@ function renderBookmarks() {
     }
     return;
   }
+
   favoritesList.innerHTML = bookmarks
-    .map(word => `
-      <div class="favorite-item" data-word="${word}">
-        <span>${word}</span>
-        <button type="button" class="remove-bookmark" data-word="${word}" aria-label="Remove bookmark">&times;</button>
-      </div>
-    `)
+    .map(entry => {
+      const definition = shortenText(entry.definition || 'No definition available', 100);
+      return `
+        <div class="showcase-card relative-card">
+          <button class="remove-bookmark-card" data-word="${entry.word}" aria-label="Remove bookmark">✕</button>
+          <div class="card-header-row">
+            <div class="card-thumbnail-wrap">
+              ${entry.thumbnail ? `
+                <img class="card-thumbnail" src="${entry.thumbnail}" alt="${entry.word}" loading="lazy" />
+              ` : `
+                <div class="card-thumbnail-placeholder">${entry.word.charAt(0).toUpperCase()}</div>
+              `}
+            </div>
+            <div class="card-header-text">
+              <div class="card-word-line">
+                <h3 class="showcase-word">${entry.word}</h3>
+                <span class="showcase-pos">${entry.partOfSpeech}</span>
+              </div>
+              ${entry.phonetic ? `<div class="showcase-pronunciation">${entry.phonetic}</div>` : ''}
+            </div>
+          </div>
+          <p class="showcase-definition">${definition}</p>
+          <button class="showcase-learn-more" data-word="${entry.word}">View Details →</button>
+        </div>
+      `;
+    })
     .join('');
+
+  favoritesList.querySelectorAll('.showcase-learn-more').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const word = e.currentTarget.dataset.word;
+      searchInput.value = word;
+      lookupWord(word);
+    });
+  });
+
+  favoritesList.querySelectorAll('.remove-bookmark-card').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const word = e.currentTarget.dataset.word;
+      toggleBookmark(word);
+    });
+  });
 }
 
 
@@ -620,17 +786,39 @@ function renderBookmarks() {
 
 async function initApp() {
   initTheme();
+  const savedColor = localStorage.getItem('wordfission-accent-color');
+  if (savedColor) {
+    applyAccentColor(savedColor);
+  }
   renderRecentSearches();
   renderBookmarks();
-  outputPanel.innerHTML = '';
+  await loadDailyShowcase();
 }
 
 function setTheme(theme) {
   const isDark = theme === 'dark';
   document.documentElement.classList.toggle('dark-theme', isDark);
-  themeToggle.textContent = isDark ? '☀️ Light' : '🌙 Dark';
+  const moonIcon = themeToggle.querySelector('.icon-moon');
+  const sunIcon = themeToggle.querySelectorAll('.icon-sun');
+  const btnLabel = themeToggle.querySelector('.btn-label');
+  if (moonIcon && sunIcon.length && btnLabel) {
+    if (isDark) {
+      moonIcon.style.display = 'none';
+      sunIcon.forEach(el => el.style.display = 'block');
+      btnLabel.textContent = 'Light';
+    } else {
+      moonIcon.style.display = 'block';
+      sunIcon.forEach(el => el.style.display = 'none');
+      btnLabel.textContent = 'Dark';
+    }
+  }
   themeToggle.setAttribute('aria-label', `Switch to ${isDark ? 'light' : 'dark'} mode`);
   localStorage.setItem('wordfission-theme', theme);
+  
+  const savedColor = localStorage.getItem('wordfission-accent-color');
+  if (savedColor) {
+    applyAccentColor(savedColor);
+  }
 }
 
 // OLD Urban Dictionary code removed - replaced by examples.js (HIGH-QUALITY EXAMPLE SENTENCE SYSTEM)
@@ -1038,7 +1226,8 @@ async function translateUIElements(langCode, langName, root) {
         if (originalText) el.placeholder = originalText;
       });
     }
-    translateBtn.innerHTML = '🌐 Translate ▼';
+    const translateLabel = translateBtn.querySelector('.btn-label');
+    if (translateLabel) translateLabel.textContent = 'Translate';
     translateBtn.classList.remove('translate-btn--active');
     translateBtn.dataset.activeLang = '';
     translateBtn.dataset.activeLangCode = 'en';
@@ -1111,7 +1300,8 @@ async function translateUIElements(langCode, langName, root) {
   }
 
   if (langName) {
-    translateBtn.innerHTML = '🌐 ' + langName + ' ▼';
+    const translateLabel = translateBtn.querySelector('.btn-label');
+    if (translateLabel) translateLabel.textContent = langName;
     translateBtn.classList.add('translate-btn--active');
   }
 
@@ -1257,23 +1447,234 @@ function initTheme() {
   setTheme(prefersDark ? 'dark' : 'light');
 }
 
+function mergeDictionaryEntries(data) {
+  if (!data || !data.length) return null;
+  if (data.length === 1) return data[0];
+
+  const firstEntry = data[0];
+  const mergedEntry = {
+    word: firstEntry.word,
+    phonetic: firstEntry.phonetic,
+    phonetics: [],
+    meanings: [],
+    sourceUrls: []
+  };
+
+  const meaningsMap = new Map();
+
+  for (const entry of data) {
+    if (entry.phonetics) {
+      mergedEntry.phonetics.push(...entry.phonetics);
+    }
+    if (entry.sourceUrls) {
+      mergedEntry.sourceUrls.push(...entry.sourceUrls);
+    }
+    if (entry.meanings) {
+      for (const m of entry.meanings) {
+        const pos = m.partOfSpeech || 'unknown';
+        if (!meaningsMap.has(pos)) {
+          meaningsMap.set(pos, {
+            partOfSpeech: pos,
+            definitions: [],
+            synonyms: [],
+            antonyms: []
+          });
+        }
+        const target = meaningsMap.get(pos);
+        if (m.definitions) {
+          target.definitions.push(...m.definitions);
+        }
+        if (m.synonyms) {
+          target.synonyms.push(...m.synonyms);
+        }
+        if (m.antonyms) {
+          target.antonyms.push(...m.antonyms);
+        }
+      }
+    }
+  }
+
+  // Deduplicate phonetics by text and audio
+  const seenPhonetics = new Set();
+  mergedEntry.phonetics = mergedEntry.phonetics.filter(p => {
+    const key = (p.text || '') + '|' + (p.audio || '');
+    if (seenPhonetics.has(key)) return false;
+    seenPhonetics.add(key);
+    return true;
+  });
+
+  // Deduplicate sourceUrls
+  mergedEntry.sourceUrls = [...new Set(mergedEntry.sourceUrls)];
+
+  // Convert meanings map back to array, and clean up synonyms/antonyms
+  mergedEntry.meanings = Array.from(meaningsMap.values()).map(m => {
+    m.synonyms = [...new Set(m.synonyms)];
+    m.antonyms = [...new Set(m.antonyms)];
+    return m;
+  });
+
+  // If phonetic was not set on the first entry, find one that has it
+  if (!mergedEntry.phonetic) {
+    const withText = mergedEntry.phonetics.find(p => p.text);
+    if (withText) mergedEntry.phonetic = withText.text;
+  }
+
+  return mergedEntry;
+}
+
+function stripHtml(html) {
+  if (!html) return "";
+  const temp = document.createElement('div');
+  temp.innerHTML = html;
+  return temp.textContent || temp.innerText || "";
+}
+
+async function fetchJson(url) {
+  try {
+    const res = await fetch(url);
+    if (res.ok) return await res.json();
+  } catch (e) {
+    console.error(`Failed to fetch from ${url}:`, e);
+  }
+  return null;
+}
+
+async function fetchFromApiWithFallback(word) {
+  let data = await fetchJson(`${API_BASE}/${encodeURIComponent(word)}`);
+  if (data) return data;
+
+  const lower = word.toLowerCase();
+  if (lower !== word) {
+    data = await fetchJson(`${API_BASE}/${encodeURIComponent(lower)}`);
+    if (data) return data;
+  }
+
+  const capitalized = word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+  if (capitalized !== word && capitalized !== lower) {
+    data = await fetchJson(`${API_BASE}/${encodeURIComponent(capitalized)}`);
+    if (data) return data;
+  }
+
+  return null;
+}
+
+async function fetchFromWiktionary(word) {
+  const urlBase = 'https://en.wiktionary.org/api/rest_v1/page/definition';
+  const candidates = [word];
+  const lower = word.toLowerCase();
+  if (!candidates.includes(lower)) candidates.push(lower);
+  const capitalized = word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+  if (!candidates.includes(capitalized)) candidates.push(capitalized);
+
+  for (const candidate of candidates) {
+    const url = `${urlBase}/${encodeURIComponent(candidate)}`;
+    const data = await fetchJson(url);
+    if (data && data.en && data.en.length > 0) {
+      return {
+        word: candidate,
+        phonetics: [],
+        meanings: data.en.map(item => ({
+          partOfSpeech: item.partOfSpeech.toLowerCase(),
+          definitions: item.definitions.map(d => {
+            let defText = stripHtml(d.definition).trim();
+            defText = defText.replace(/\s+/g, ' ');
+            
+            let exampleText = undefined;
+            if (d.examples && d.examples.length > 0) {
+              exampleText = stripHtml(d.examples[0]).trim().replace(/\s+/g, ' ');
+            } else if (d.parsedExamples && d.parsedExamples.length > 0) {
+              exampleText = stripHtml(d.parsedExamples[0].example || '').trim().replace(/\s+/g, ' ');
+            }
+            
+            return {
+              definition: defText,
+              example: exampleText
+            };
+          })
+        }))
+      };
+    }
+  }
+  return null;
+}
+
+async function fetchFromWikipedia(word) {
+  const urlBase = 'https://en.wikipedia.org/api/rest_v1/page/summary';
+  const candidates = [word];
+  const lower = word.toLowerCase();
+  if (!candidates.includes(lower)) candidates.push(lower);
+  const capitalized = word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+  if (!candidates.includes(capitalized)) candidates.push(capitalized);
+
+  for (const candidate of candidates) {
+    const url = `${urlBase}/${encodeURIComponent(candidate)}`;
+    const data = await fetchJson(url);
+    if (data && data.extract && data.type !== 'no-meaning') {
+      const summaryText = data.extract.trim();
+      if (summaryText.length > 0) {
+        return {
+          word: data.title || candidate,
+          phonetics: [],
+          meanings: [
+            {
+              partOfSpeech: 'noun',
+              definitions: [
+                {
+                  definition: summaryText,
+                  example: undefined
+                }
+              ]
+            }
+          ]
+        };
+      }
+    }
+  }
+  return null;
+}
+
 async function lookupWord(word) {
   outputPanel.innerHTML = '<div class="output-empty" data-translate="loading">Loading definition...</div>';
+  const shell = document.querySelector('.app-shell');
+  if (shell) {
+    shell.classList.remove('has-active-sidebar');
+  }
   const btn = document.getElementById('translate-btn');
   if (btn && btn.dataset.activeLang && btn.dataset.activeLangCode) {
     translateUIElements(btn.dataset.activeLangCode, btn.dataset.activeLang, outputPanel);
   }
 
   try {
-    const response = await fetch(`${API_BASE}/${encodeURIComponent(word)}`);
-    if (!response.ok) {
-      throw new Error('Word not found');
+    const data = await fetchFromApiWithFallback(word);
+    if (data) {
+      const merged = mergeDictionaryEntries(data);
+      await renderResult(merged);
+      saveRecentSearch(merged);
+      return;
     }
-    const data = await response.json();
-    await renderResult(data[0]);
-    saveRecentSearch(word);
+
+    const wiktionaryEntry = await fetchFromWiktionary(word);
+    if (wiktionaryEntry) {
+      await renderResult(wiktionaryEntry);
+      saveRecentSearch(wiktionaryEntry);
+      return;
+    }
+
+    const wikipediaEntry = await fetchFromWikipedia(word);
+    if (wikipediaEntry) {
+      await renderResult(wikipediaEntry);
+      saveRecentSearch(wikipediaEntry);
+      return;
+    }
+
+    throw new Error('Word not found in any sources');
   } catch (error) {
+    console.error('Error during word lookup:', error);
     outputPanel.innerHTML = `<div class="output-empty"><span data-translate="not-found">Unable to find</span> "${word}". <span data-translate="try-another">Try another word.</span></div>`;
+    const shellEl = document.querySelector('.app-shell');
+    if (shellEl) {
+      shellEl.classList.remove('has-active-sidebar');
+    }
     if (btn && btn.dataset.activeLang && btn.dataset.activeLangCode) {
       translateUIElements(btn.dataset.activeLangCode, btn.dataset.activeLang, outputPanel);
     }
@@ -1290,6 +1691,10 @@ async function renderResult(entry) {
   const audioSource = entry.phonetics.find((item) => item.audio) || {};
   if (!entry.meanings || !entry.meanings.length) {
     outputPanel.innerHTML = `<div class="output-empty"><span data-translate="no-definitions">No definitions available for</span> "${entry.word}".</div>`;
+    const shell = document.querySelector('.app-shell');
+    if (shell) {
+      shell.classList.remove('has-active-sidebar');
+    }
     const btn = document.getElementById('translate-btn');
     if (btn && btn.dataset.activeLang && btn.dataset.activeLangCode) {
       translateUIElements(btn.dataset.activeLangCode, btn.dataset.activeLang, outputPanel);
@@ -1384,32 +1789,53 @@ async function renderResult(entry) {
     </svg>
   `;
 
-  const pronunciationHtml = '';
+  const pronunciationText = phonetics.text || entry.phonetic || '';
+  const pronunciationHtml = pronunciationText
+    ? `<span class="pronunciation">${pronunciationText}</span>`
+    : '';
 
   currentEntry = entry;
 
+  const shell = document.querySelector('.app-shell');
+  if (shell) {
+    shell.classList.toggle('has-active-sidebar', !!etymologyHtml);
+  }
+
+  const layoutClass = etymologyHtml ? 'details-layout details-layout--with-sidebar' : 'details-layout';
+
   outputPanel.innerHTML = `
     <div class="definition-card">
-      <div class="definition-header">
-        <div class="definition-title-row">
-          <h2 data-translate-word="${escAttr(entry.word)}">${entry.word}</h2>
-          <div class="definition-actions">
-            <button class="bookmark-button ${activeClass}" data-word="${entry.word}" aria-label="Bookmark word">${starSvg}</button>
-            ${audioSource.audio ? `<button class="audio-button" data-audio="${audioSource.audio}" aria-label="Play pronunciation">${audioSvg}</button>` : ''}
+      <div class="${layoutClass}">
+        <div class="details-main-col">
+          <div class="definition-header">
+            <div class="definition-title-row">
+              <h2 data-translate-word="${escAttr(entry.word)}">${entry.word}</h2>
+              <div class="definition-actions">
+                <button class="bookmark-button ${activeClass}" data-word="${entry.word}" aria-label="Bookmark word">${starSvg}</button>
+                ${audioSource.audio ? `<button class="audio-button" data-audio="${audioSource.audio}" aria-label="Play pronunciation">${audioSvg}</button>` : ''}
+              </div>
+            </div>
+            ${pronunciationHtml}
+            <div id="word-image-section" class="word-image-section" style="display: none;"></div>
+            ${summaryHtml}
+            ${relatedWordsHtml}
           </div>
+          ${meaningsHtml}
+          ${fallbackHtml}
+          ${sentenceSourceHtml}
+          ${noExampleHtml}
         </div>
-        ${summaryHtml}
-        ${relatedWordsHtml}
-        ${etymologyHtml}
+        <div class="details-sidebar-col">
+          ${etymologyHtml}
+        </div>
       </div>
-      ${meaningsHtml}
-      ${fallbackHtml}
-      ${sentenceSourceHtml}
-      ${noExampleHtml}
     </div>
   `;
 
   annotateCardForTranslation(entry);
+
+  // Fetch images asynchronously to not block UI rendering
+  fetchAndRenderImages(entry.word);
 
   // Re-apply translation if a language is already active (card was rebuilt)
   const btn = document.getElementById('translate-btn');
@@ -1531,30 +1957,16 @@ outputPanel.addEventListener('click', async (event) => {
   audio.play();
 });
 
-recentList.addEventListener('click', (event) => {
-  const btn = event.target.closest('.recent-item');
-  if (btn) {
-    const word = btn.dataset.word;
-    searchInput.value = word;
-    lookupWord(word);
-  }
-});
+// Clear recents history click listener
+const clearRecentsBtn = document.getElementById('clear-recents-btn');
+if (clearRecentsBtn) {
+  clearRecentsBtn.addEventListener('click', () => {
+    localStorage.removeItem('wordfission-recents');
+    renderRecentSearches();
+  });
+}
 
-favoritesList.addEventListener('click', (event) => {
-  const removeBtn = event.target.closest('.remove-bookmark');
-  if (removeBtn) {
-    event.stopPropagation();
-    const word = removeBtn.dataset.word;
-    toggleBookmark(word);
-    return;
-  }
-  const item = event.target.closest('.favorite-item');
-  if (item) {
-    const word = item.dataset.word;
-    searchInput.value = word;
-    lookupWord(word);
-  }
-});
+// Purged favoritesList listener because logic is fully self-contained inside renderBookmarks
 
 themeToggle.addEventListener('click', () => {
   const isDark = document.documentElement.classList.contains('dark-theme');
@@ -1610,7 +2022,8 @@ translatePanel.addEventListener('click', (e) => {
   closeTranslatePanel();
   translateBtn.dataset.activeLang = langName;
   translateBtn.dataset.activeLangCode = langCode;
-  translateBtn.innerHTML = '🌐 ' + langName + ' ▼';
+  const translateLabel = translateBtn.querySelector('.btn-label');
+  if (translateLabel) translateLabel.textContent = langName;
   translateBtn.classList.add('translate-btn--active');
   
   // Translate UI elements
@@ -1624,11 +2037,354 @@ translatePanel.addEventListener('click', (e) => {
 
 document.addEventListener('click', (e) => {
   if (translateWrap && !translateWrap.contains(e.target)) closeTranslatePanel();
+  if (accentWrap && !accentWrap.contains(e.target)) closeAccentPanel();
   if (!e.target.closest('.search-container')) clearSuggestions();
 });
 
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') closeTranslatePanel();
+  if (e.key === 'Escape') {
+    closeTranslatePanel();
+    closeAccentPanel();
+  }
 });
+
+// ── Accent Color Panel ───────────────────────────────────────────────────────
+const accentBtn = document.getElementById('accent-btn');
+const accentPanel = document.getElementById('accent-panel');
+const accentColorPicker = document.getElementById('accent-color-picker');
+const accentWrap = document.getElementById('accent-dropdown-wrap');
+const presetButtons = document.querySelectorAll('.accent-preset-btn');
+
+function hexToRgb(hex) {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16)
+  } : null;
+}
+
+function adjustColorBrightness(hex, percent) {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return hex;
+  const adjust = (val) => Math.max(0, Math.min(255, Math.round(val + (percent * 255) / 100)));
+  const r = adjust(rgb.r).toString(16).padStart(2, '0');
+  const g = adjust(rgb.g).toString(16).padStart(2, '0');
+  const b = adjust(rgb.b).toString(16).padStart(2, '0');
+  return `#${r}${g}${b}`;
+}
+
+function applyAccentColor(hexColor) {
+  const rgb = hexToRgb(hexColor);
+  if (!rgb) return;
+
+  const rootStyle = document.documentElement.style;
+  rootStyle.setProperty('--primary', hexColor);
+  
+  const isDark = document.documentElement.classList.contains('dark-theme');
+  const hoverColor = adjustColorBrightness(hexColor, isDark ? 20 : -15);
+  
+  rootStyle.setProperty('--primary-hover', hoverColor);
+  rootStyle.setProperty('--accent', hexColor);
+  
+  const softBg = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${isDark ? 0.2 : 0.1})`;
+  rootStyle.setProperty('--accent-soft', softBg);
+  rootStyle.setProperty('--tag-bg', softBg);
+  rootStyle.setProperty('--tag-text', hexColor);
+  rootStyle.setProperty('--bookmark', hexColor);
+
+  localStorage.setItem('wordfission-accent-color', hexColor);
+  accentColorPicker.value = hexColor;
+
+  presetButtons.forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.color.toLowerCase() === hexColor.toLowerCase());
+  });
+}
+
+function openAccentPanel() {
+  accentPanel.hidden = false;
+  accentBtn.setAttribute('aria-expanded', 'true');
+}
+
+function closeAccentPanel() {
+  accentPanel.hidden = true;
+  accentBtn.setAttribute('aria-expanded', 'false');
+}
+
+accentBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  closeTranslatePanel();
+  if (!accentPanel.hidden) {
+    closeAccentPanel();
+  } else {
+    openAccentPanel();
+  }
+});
+
+accentPanel.addEventListener('click', (e) => {
+  const preset = e.target.closest('.accent-preset-btn');
+  if (preset) {
+    applyAccentColor(preset.dataset.color);
+  }
+});
+
+accentColorPicker.addEventListener('input', (e) => {
+  applyAccentColor(e.target.value);
+});
+
+// ── Word Image Carousel ──────────────────────────────────────────────────────
+async function fetchWordImages(word) {
+  const url = `https://commons.wikimedia.org/w/api.php?action=query&format=json&prop=imageinfo&iiprop=url|extmetadata&generator=search&gsrnamespace=6&gsrsearch=${encodeURIComponent(word)}&gsrlimit=5&origin=*`;
+  
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return [];
+    const data = await res.json();
+    if (!data.query || !data.query.pages) return [];
+    
+    const pages = Object.values(data.query.pages);
+    const images = [];
+    
+    for (const page of pages) {
+      if (page.imageinfo && page.imageinfo[0]) {
+        const info = page.imageinfo[0];
+        const imageUrl = info.url;
+        
+        const lowerUrl = imageUrl.toLowerCase();
+        if (!lowerUrl.endsWith('.jpg') && !lowerUrl.endsWith('.jpeg') && !lowerUrl.endsWith('.png') && !lowerUrl.endsWith('.webp') && !lowerUrl.endsWith('.gif')) {
+          continue;
+        }
+
+        let caption = '';
+        if (info.extmetadata) {
+          if (info.extmetadata.ImageDescription && info.extmetadata.ImageDescription.value) {
+            caption = info.extmetadata.ImageDescription.value.replace(/<\/?[^>]+(>|$)/g, "").trim();
+          } else if (info.extmetadata.ObjectName && info.extmetadata.ObjectName.value) {
+            caption = info.extmetadata.ObjectName.value.trim();
+          }
+        }
+        
+        if (caption.length > 120) {
+          caption = caption.substring(0, 117) + '...';
+        }
+
+        images.push({ url: imageUrl, caption });
+      }
+    }
+    return images;
+  } catch (err) {
+    console.error('Failed to fetch images:', err);
+    return [];
+  }
+}
+
+async function fetchAndRenderImages(word) {
+  const container = document.getElementById('word-image-section');
+  if (!container) return;
+
+  const images = await fetchWordImages(word);
+  
+  const currentContainer = document.getElementById('word-image-section');
+  if (!currentContainer) return;
+  if (!currentEntry || currentEntry.word.toLowerCase() !== word.toLowerCase()) return;
+
+  if (!images || images.length === 0) {
+    currentContainer.style.display = 'none';
+    return;
+  }
+
+  let slidesHtml = '';
+  let dotsHtml = '';
+
+  images.forEach((img, idx) => {
+    slidesHtml += `
+      <div class="image-slide ${idx === 0 ? 'active' : ''}" data-index="${idx}">
+        <img src="${img.url}" alt="${escAttr(word)} illustration" loading="lazy" class="word-illustration" />
+        ${img.caption ? `<div class="image-caption">${img.caption}</div>` : ''}
+      </div>
+    `;
+    if (images.length > 1) {
+      dotsHtml += `
+        <span class="carousel-dot ${idx === 0 ? 'active' : ''}" data-index="${idx}"></span>
+      `;
+    }
+  });
+
+  const controlsHtml = images.length > 1 ? `
+    <button class="carousel-prev" aria-label="Previous image">❮</button>
+    <button class="carousel-next" aria-label="Next image">❯</button>
+  ` : '';
+
+  const indicatorHtml = images.length > 1 ? `
+    <div class="carousel-dots">${dotsHtml}</div>
+  ` : '';
+
+  currentContainer.innerHTML = `
+    <div class="carousel-wrapper">
+      <div class="carousel-slides">
+        ${slidesHtml}
+      </div>
+      ${controlsHtml}
+      ${indicatorHtml}
+    </div>
+  `;
+
+  currentContainer.style.display = 'block';
+
+  if (images.length > 1) {
+    setupCarouselEvents(currentContainer);
+  }
+}
+
+function setupCarouselEvents(container) {
+  let currentIndex = 0;
+  const slides = container.querySelectorAll('.image-slide');
+  const dots = container.querySelectorAll('.carousel-dot');
+  const prevBtn = container.querySelector('.carousel-prev');
+  const nextBtn = container.querySelector('.carousel-next');
+
+  function showSlide(index) {
+    slides[currentIndex].classList.remove('active');
+    if (dots.length) dots[currentIndex].classList.remove('active');
+
+    currentIndex = (index + slides.length) % slides.length;
+
+    slides[currentIndex].classList.add('active');
+    if (dots.length) dots[currentIndex].classList.add('active');
+  }
+
+  if (prevBtn) {
+    prevBtn.addEventListener('click', () => showSlide(currentIndex - 1));
+  }
+  if (nextBtn) {
+    nextBtn.addEventListener('click', () => showSlide(currentIndex + 1));
+  }
+
+  dots.forEach(dot => {
+    dot.addEventListener('click', () => {
+      const idx = parseInt(dot.dataset.index);
+      showSlide(idx);
+    });
+  });
+}
+
+// ── Daily Showcase ───────────────────────────────────────────────────────────
+const WORD_OF_THE_DAY_CANDIDATES = [
+  "serendipity", "ephemeral", "solitude", "eloquence", "melancholy",
+  "sonorous", "luminescence", "panacea", "lullaby", "aurora",
+  "soliloquy", "oblivion", "wanderlust", "effervescent", "halcyon",
+  "nefarious", "petrichor", "defenestration", "idyllic", "mellifluous",
+  "labyrinth", "ethereal", "silhouette", "symphony", "paradise",
+  "monologue", "phenomenon", "metaphor", "fission", "antigravity",
+  "universe", "galaxy", "adventure", "cacophony", "epiphany",
+  "quintessential", "demure", "nostalgia", "resilience", "plethora",
+  "conundrum", "altruism", "ebullient", "gregarious", "loquacious"
+];
+
+function getDailyWords(count = 5) {
+  const today = new Date();
+  const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / 86400000);
+  
+  const words = [];
+  for (let i = 0; i < count; i++) {
+    const index = (dayOfYear + today.getFullYear() + i * 7) % WORD_OF_THE_DAY_CANDIDATES.length;
+    const w = WORD_OF_THE_DAY_CANDIDATES[index];
+    if (!words.includes(w)) {
+      words.push(w);
+    }
+  }
+  
+  let offset = 1;
+  while (words.length < count) {
+    const index = (dayOfYear + today.getFullYear() + count * 7 + offset) % WORD_OF_THE_DAY_CANDIDATES.length;
+    const w = WORD_OF_THE_DAY_CANDIDATES[index];
+    if (!words.includes(w)) {
+      words.push(w);
+    }
+    offset++;
+  }
+  return words;
+}
+
+async function loadDailyShowcase() {
+  outputPanel.innerHTML = '<div class="output-empty"><span data-translate="loading">Loading Today\'s Words...</span></div>';
+  
+  const words = getDailyWords(5);
+  const promises = words.map(async (word) => {
+    try {
+      let entry = await fetchFromApiWithFallback(word);
+      if (!entry) entry = await fetchFromWiktionary(word);
+      if (!entry) entry = await fetchFromWikipedia(word);
+      if (!entry) return null;
+      
+      const merged = entry.meanings ? entry : mergeDictionaryEntries(entry);
+      const thumbnail = await fetchWordThumbnail(word);
+      merged.thumbnail = thumbnail;
+      return merged;
+    } catch (e) {
+      console.error(`Failed to fetch for showcase word ${word}:`, e);
+      return null;
+    }
+  });
+
+  const results = (await Promise.all(promises)).filter(Boolean);
+
+  if (results.length === 0) {
+    outputPanel.innerHTML = '';
+    return;
+  }
+
+  let cardsHtml = '';
+  results.forEach(entry => {
+    const definitionObj = entry.meanings?.[0]?.definitions?.[0] || {};
+    const definition = shortenText(definitionObj.definition || 'No definition available', 100);
+    const partOfSpeech = entry.meanings?.[0]?.partOfSpeech || 'noun';
+    const phonetic = entry.phonetic || entry.phonetics?.find(p => p.text)?.text || '';
+
+    cardsHtml += `
+      <div class="showcase-card">
+        <div class="card-header-row">
+          <div class="card-thumbnail-wrap">
+            ${entry.thumbnail ? `
+              <img class="card-thumbnail" src="${entry.thumbnail}" alt="${entry.word}" loading="lazy" />
+            ` : `
+              <div class="card-thumbnail-placeholder">${entry.word.charAt(0).toUpperCase()}</div>
+            `}
+          </div>
+          <div class="card-header-text">
+            <div class="card-word-line">
+              <h3 class="showcase-word">${entry.word}</h3>
+              <span class="showcase-pos">${partOfSpeech}</span>
+            </div>
+            ${phonetic ? `<div class="showcase-pronunciation">${phonetic}</div>` : ''}
+          </div>
+        </div>
+        <p class="showcase-definition">${definition}</p>
+        <button class="showcase-learn-more" data-word="${entry.word}">Learn More →</button>
+      </div>
+    `;
+  });
+
+  outputPanel.innerHTML = `
+    <div class="showcase-section">
+      <div class="showcase-section-header">
+        <span class="showcase-tag">DAILY WORDS</span>
+        <h2 class="showcase-title">Explore Today's Showcase</h2>
+        <p class="showcase-subtitle">A curated collection of interesting, advanced, and beautiful words refreshed daily.</p>
+      </div>
+      <div class="showcase-grid">
+        ${cardsHtml}
+      </div>
+    </div>
+  `;
+
+  outputPanel.querySelectorAll('.showcase-learn-more').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const word = e.currentTarget.dataset.word;
+      searchInput.value = word;
+      lookupWord(word);
+    });
+  });
+}
 
 initApp();
